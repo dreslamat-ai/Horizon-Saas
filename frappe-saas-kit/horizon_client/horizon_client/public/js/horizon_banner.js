@@ -13,11 +13,13 @@
       var expired = d.days_left < 0;
       var closing = !expired && d.days_left <= 7;
       var bg = expired ? "#B04A3F" : closing ? "#B8860B" : "#1D2D44";
+      // نص مختصر للشاشات الضيقة — الكامل كان بيلزق في الزرار (بلاغ لقطة)
+      var narrow = window.innerWidth < 560;
       var txt = expired
-        ? "انتهى اشتراكك (" + (d.plan || "Horizon") + ")"
+        ? (narrow ? "انتهى اشتراكك" : "انتهى اشتراكك (" + (d.plan || "Horizon") + ")")
         : closing
-          ? "باقتك (" + (d.plan || "Horizon") + ") تنتهي خلال " + d.days_left + " يوم"
-          : "الفترة التجريبية: باقي " + d.days_left + " يوم";
+          ? (narrow ? "باقتك تنتهي خلال " + d.days_left + " يوم" : "باقتك (" + (d.plan || "Horizon") + ") تنتهي خلال " + d.days_left + " يوم")
+          : (narrow ? "التجربة: باقي " + d.days_left + " يوم" : "الفترة التجريبية: باقي " + d.days_left + " يوم");
       var btnLabel = expired || closing ? "جدّد الآن" : "إدارة الاشتراك";
 
       var bar = document.createElement("div");
