@@ -64,10 +64,22 @@ def resume(tenant: str):
 # ------------------------------------------------------------------ #
 
 def enforce_expiries():
-    """Daily: suspend Active sites whose subscription ended more than GRACE_DAYS ago."""
+    """Daily: suspend Active sites whose subscription ended more than GRACE_DAYS ago.
+
+    🔴 حادثة ٢٤ أغسطس ٢٠٢٦ (منتصف الليل KSA): مواقع الإنتاج العشرة المسجَّلة
+    كبيانات وصفية كانت subscription_ends_on فيها NULL — وفرابي يبني شرط
+    التاريخ بـ ifnull(..., '') والسلسلة الفاضية "أصغر من" أي تاريخ، فاعتُبرت
+    كلها "منتهية من الأزل" وعُلِّقت جميعًا (maintenance_mode) في أول تشغيلة
+    ليلية. من هنا: **بلا تاريخ انتهاء = لا إنفاذ إطلاقًا** — الموقع الذي لا
+    يُدار اشتراكه من المنصة لا تعلّقه المنصة أبدًا.
+    """
     rows = frappe.get_all(
         "Tenant Site",
-        filters={"status": "Active", "subscription_ends_on": ["<", add_days(nowdate(), -GRACE_DAYS)]},
+        filters=[
+            ["status", "=", "Active"],
+            ["subscription_ends_on", "is", "set"],
+            ["subscription_ends_on", "<", add_days(nowdate(), -GRACE_DAYS)],
+        ],
         pluck="name",
     )
     for name in rows:
