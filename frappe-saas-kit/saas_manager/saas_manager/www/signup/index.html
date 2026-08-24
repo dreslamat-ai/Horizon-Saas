@@ -295,6 +295,16 @@ h1 .u::after{content:"";position:absolute;right:0;bottom:4px;height:10px;width:1
 .toast.show{transform:translateX(50%) translateY(0)}
 .toast.err{background:var(--red)}
 
+/* الأوامر التقنية مخفية عن المستخدم — طلب المالك (العناصر باقية لأن الكود بيحدثها) */
+.tl .cmd{display:none!important}
+/* شريط تقدم لكل خطوة — طلب المالك: بيزحف أثناء التنفيذ ويكتمل أخضر */
+.tl .pbar{height:4px;background:#E9EDF3;border-radius:99px;margin-top:8px;overflow:hidden;opacity:0;transition:opacity .3s}
+.tl .row.live .pbar,.tl .row.done .pbar{opacity:1}
+.tl .pbar i{display:block;height:100%;width:0;border-radius:99px;background:#5083BC}
+.tl .row.live .pbar i{animation:crawl 18s ease-out forwards}
+.tl .row.done .pbar i{width:100%;background:#2E9E63;animation:none;transition:width .5s}
+@keyframes crawl{0%{width:4%}55%{width:68%}100%{width:93%}}
+
 /* خطأ تحت الحقل نفسه — طلب المالك: «المشكلة تتكتب تحت الحق بتاعها وتعلم عليه احمر» */
 .f-bad{border-color:#B3402A!important;background:#FDF3F0!important;box-shadow:0 0 0 4px rgba(179,64,42,.08)!important}
 .f-err{display:block;margin-top:7px;font-size:12.5px;font-weight:700;color:#B3402A;text-align:right}
@@ -691,6 +701,10 @@ $("cta2").addEventListener("click", async ()=>{
 
 /* ---------- provisioning: timeline + browser build ---------- */
 const ORDER=["queue","site","apps","ssl","user"];
+// شريط تقدم جوه كل صف — يتحقن مرة واحدة
+document.querySelectorAll("#tl .row > div:last-child").forEach(d=>{
+  const p=document.createElement("div"); p.className="pbar"; p.innerHTML="<i></i>"; d.appendChild(p);
+});
 function mark(k, st){ // st: live|done
   const rows=[...document.querySelectorAll(".tl .row")];
   const idx=ORDER.indexOf(k);
