@@ -25,7 +25,9 @@ bench and adjust ADMIN/DB flag constants if needed — do not assume.
 
 import json
 import re
+import os
 import secrets
+import shutil
 import string
 import subprocess
 
@@ -84,9 +86,19 @@ def _log(tenant_name: str, message: str):
     frappe.db.commit()
 
 
+def bench_bin() -> str:
+    # عمال RQ من supervisor بيشتغلوا بـPATH لا يحوي ~/.local/bin —
+    # قيس فعليًا: FileNotFoundError: 'bench' أسقط أول تجهيز (٢٤ أغسطس)
+    return (
+        frappe.conf.get("saas_bench_bin")
+        or shutil.which("bench")
+        or os.path.expanduser("~/.local/bin/bench")
+    )
+
+
 def run_bench(args: list, tenant_name: str | None = None, timeout: int = 1800):
     """Run a bench command safely (arg list, no shell)."""
-    cmd = ["bench"] + args
+    cmd = [bench_bin()] + args
     if tenant_name:
         # redact any password-looking flag values in the log
         redacted = []
