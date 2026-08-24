@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>اشتراكي — Horizon ERP</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1D2D44;--navy-500:#3D5170;--blue:#5083BC;--line:#E3E5E0;--paper:#F7F8F6;--muted:#4A5361;--amber:#B8860B;--red:#B04A3F;--green:#2E9E63}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--paper);color:#1A1717;min-height:100vh}
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px clamp(16px,4vw,40px);background:#fff;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:18px;color:var(--navy)}
+.brand img{height:34px}
+.back{font-size:13px;font-weight:700;color:var(--navy-500);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:clamp(18px,4vw,40px)}
+h1{font-size:24px;font-weight:900;color:var(--navy);margin-bottom:18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 1px 2px rgba(29,45,68,.05)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.stat .v{font-size:22px;font-weight:900;color:var(--navy)}
+.stat .l{font-size:12.5px;color:var(--muted);font-weight:700}
+.badge{display:inline-block;padding:4px 14px;border-radius:999px;font-size:13px;font-weight:800;background:#EEF4FB;color:var(--navy)}
+.warn{color:var(--amber)} .danger{color:var(--red)} .ok{color:var(--green)}
+h2{font-size:17px;font-weight:800;color:var(--navy);margin-bottom:12px}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}
+.plan{border:1.5px solid var(--line);border-radius:14px;padding:16px;text-align:center;cursor:pointer;transition:.2s}
+.plan.sel{border-color:var(--navy);box-shadow:0 0 0 4px rgba(29,45,68,.08)}
+.plan .nm{font-weight:800;color:var(--navy)}
+.plan .pr{font-size:20px;font-weight:900;color:var(--navy);margin:6px 0}
+.plan .pr small{font-size:11px;color:var(--muted);font-weight:700}
+.plan .ft{font-size:12px;color:var(--muted);font-weight:700}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+select{font-family:inherit;font-size:14px;font-weight:700;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+.btn{font-family:inherit;font-size:14.5px;font-weight:800;padding:12px 22px;border:none;border-radius:12px;cursor:pointer;background:var(--navy);color:#fff}
+.btn.alt{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
+.btn[disabled]{opacity:.55;pointer-events:none}
+.msg{display:none;margin-top:12px;padding:12px 16px;border-radius:12px;font-weight:700;font-size:13.5px}
+.msg.show{display:block}
+.msg.good{background:#EAF6EF;color:#1F7A4D}
+.msg.bad{background:#FDF3F0;color:var(--red)}
+.note{font-size:12.5px;color:var(--muted);font-weight:600;line-height:1.8}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="/files/horizon-logo1.png" alt="Horizon" onerror="this.style.display='none'">اشتراكي</div>
+  <a class="back" href="/app">← الرجوع للنظام</a>
+</header>
+<main class="wrap">
+  <h1>حساب {{ site_name.split(".")[0] }}</h1>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:14px">
+      <span class="badge">الباقة الحالية: {{ plan }}</span>
+      {% if days_left is not none %}
+        {% if days_left < 0 %}<b class="danger">انتهى الاشتراك — جدّد الآن</b>
+        {% elif days_left <= 7 %}<b class="warn">باقي {{ days_left }} يوم على الانتهاء</b>
+        {% else %}<b class="ok">فعّال حتى {{ ends_on }}</b>{% endif %}
+      {% endif %}
+    </div>
+    <div class="grid">
+      <div class="stat"><div class="v">{{ used_users }}{% if max_users %} / {{ max_users }}{% endif %}</div><div class="l">المستخدمون النشطون</div></div>
+      <div class="stat"><div class="v">{{ ends_on or "—" }}</div><div class="l">نهاية الاشتراك</div></div>
+      <div class="stat"><div class="v">{% if days_left is not none %}{{ days_left if days_left > 0 else 0 }}{% else %}—{% endif %}</div><div class="l">الأيام المتبقية</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>تجديد الاشتراك</h2>
+    <div class="row">
+      <select id="months">
+        <option value="1">شهر</option>
+        <option value="3">٣ شهور</option>
+        <option value="6">٦ شهور</option>
+        <option value="12" selected>سنة</option>
+      </select>
+      <button class="btn" id="renewBtn">جدّد الآن</button>
+    </div>
+    <div class="msg" id="renewMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>ترقية الباقة</h2>
+    <div class="plans" id="upPlans"><div class="note">بنحمّل الباقات…</div></div>
+    <div class="row"><button class="btn alt" id="upBtn" disabled>اطلب الترقية</button></div>
+    <div class="msg" id="upMsg"></div>
+    <p class="note" style="margin-top:10px">الترقية بتتفعّل فور تأكيد السداد، وفريق Horizon بيتواصل معك في نفس اليوم.</p>
+  </div>
+</main>
+<script>
+const CONTROL = "{{ control_url }}";
+const SITE = "{{ site_name }}";
+const CUR_PLAN = "{{ plan }}";
+let upSel = null;
+
+function show(id, good, text){
+  const m = document.getElementById(id);
+  m.className = "msg show " + (good ? "good" : "bad");
+  m.textContent = text;
+}
+
+async function portal(kind, extra){
+  const body = Object.assign({site: SITE, kind: kind}, extra || {});
+  const r = await fetch(CONTROL + "/api/method/saas_manager.api.portal.request_service", {
+    method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)
+  });
+  const j = await r.json();
+  if(!r.ok) throw (j._server_messages ? JSON.parse(JSON.parse(j._server_messages)[0]).message : "تعذّر إرسال الطلب");
+  return j.message || j;
+}
+
+document.getElementById("renewBtn").addEventListener("click", async e=>{
+  e.target.disabled = true;
+  try{
+    const r = await portal("renew", {months: document.getElementById("months").value});
+    if(r.mode === "pay" && r.url){ location.href = r.url; return; }
+    show("renewMsg", true, r.message || "وصل طلب التجديد — فريق Horizon هيتواصل معك لإتمام السداد.");
+  }catch(err){ show("renewMsg", false, String(err)); }
+  e.target.disabled = false;
+});
+
+fetch(CONTROL + "/api/method/saas_manager.api.signup.get_plans")
+  .then(r=>r.json()).then(j=>{
+    const plans = (j.message || []).filter(p=>p.name !== CUR_PLAN);
+    const box = document.getElementById("upPlans");
+    if(!plans.length){ box.innerHTML = '<div class="note">أنت على أعلى باقة 👌</div>'; return; }
+    box.innerHTML = plans.map(p=>`
+      <div class="plan" data-plan="${p.name}">
+        <div class="nm">${p.plan_name || p.name}</div>
+        <div class="pr">${Math.round(p.monthly_price)} <small>${p.currency}/شهر</small></div>
+        <div class="ft">${p.max_users ? p.max_users + " مستخدم" : "مستخدمين بلا حد"}</div>
+      </div>`).join("");
+    box.querySelectorAll(".plan").forEach(el=>el.addEventListener("click", ()=>{
+      box.querySelectorAll(".plan").forEach(x=>x.classList.remove("sel"));
+      el.classList.add("sel"); upSel = el.dataset.plan;
+      document.getElementById("upBtn").disabled = false;
+    }));
+  }).catch(()=>{ document.getElementById("upPlans").innerHTML = '<div class="note">تعذّر تحميل الباقات — جرّب لاحقًا</div>'; });
+
+document.getElementById("upBtn").addEventListener("click", async e=>{
+  if(!upSel) return;
+  e.target.disabled = true;
+  try{
+    const r = await portal("upgrade", {plan: upSel});
+    show("upMsg", true, r.message || "وصل طلب الترقية — بيتفعّل فور تأكيد السداد.");
+  }catch(err){ show("upMsg", false, String(err)); e.target.disabled = false; }
+});
+</script>
+</body>
+</html>
