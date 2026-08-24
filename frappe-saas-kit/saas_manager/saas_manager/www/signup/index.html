@@ -399,8 +399,10 @@ input:focus-visible,button:focus-visible,.plan:focus-within{outline:2px solid va
             <div class="hint" id="sdH">حروف إنجليزية صغيرة وأرقام وشرطات، يبدأ بحرف (٣ أحرف على الأقل)</div>
           </div>
 
-          <div class="f" style="margin-bottom:6px"><label>الباقة — تقدر تغيّرها في أي وقت</label></div>
-          <div class="plans" id="plans">
+          <!-- الباقات مخفية مؤقتًا بقرار المالك (٢٤ أغسطس) — كل تسجيل ياخد
+               تجربة ١٤ يومًا على الباقة الموصى بها، والعناصر باقية للرجوع -->
+          <div class="f" style="margin-bottom:6px;display:none"><label>الباقة — تقدر تغيّرها في أي وقت</label></div>
+          <div class="plans" id="plans" style="display:none">
             {% for p in plans %}
             <label class="plan {% if p.name == recommended %}sel{% endif %}" data-plan="{{ p.name }}">
               {% if p.name == recommended %}<span class="tag">الأكثر اختيارًا</span>{% endif %}
@@ -534,7 +536,7 @@ const API = {
 const HAS_BACKEND = !!window.frappe || location.pathname.includes("/signup");
 const $ = id => document.getElementById(id);
 let lastPayload=null;
-let state = { request_id:null, subOK:false, plan:"Horizon Pro", demo:!HAS_BACKEND };
+let state = { request_id:null, subOK:false, plan:"{{ recommended or 'Horizon Pro' }}", demo:!HAS_BACKEND };
 
 async function api(url, data){
   try{
