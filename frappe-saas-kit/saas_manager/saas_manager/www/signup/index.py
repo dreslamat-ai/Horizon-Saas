@@ -6,6 +6,9 @@ def get_context(context):
     so pricing/limits are edited in Desk — never in the template."""
     context.no_cache = 1
     context.root_domain = frappe.conf.get("saas_root_domain") or "horizonerp.cloud"
+    # جلسة داخلة (مثلاً أدمن فاتح الدسك) بترفض أي POST بلا توكن CSRF
+    # بـ"طلب غير صالح" — الصفحة لازم تحقنه وتبعته مع كل نداء
+    context.csrf_token = frappe.sessions.get_csrf_token()
     context.plans = frappe.get_all(
         "SaaS Plan",
         filters={"enabled": 1},

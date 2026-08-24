@@ -295,6 +295,10 @@ h1 .u::after{content:"";position:absolute;right:0;bottom:4px;height:10px;width:1
 .toast.show{transform:translateX(50%) translateY(0)}
 .toast.err{background:var(--red)}
 
+/* خطأ تحت الحقل نفسه — طلب المالك: «المشكلة تتكتب تحت الحق بتاعها وتعلم عليه احمر» */
+.f-bad{border-color:#B3402A!important;background:#FDF3F0!important;box-shadow:0 0 0 4px rgba(179,64,42,.08)!important}
+.f-err{display:block;margin-top:7px;font-size:12.5px;font-weight:700;color:#B3402A;text-align:right}
+
 /* على الجوال: المحتوى يظهر فورًا ثابتًا — أنيميشن الدخول (شفافية+بلور+إزاحة)
    تقيل على معالجات الموبايل وبيدي إحساس «عائم»، والمالك بلّغ عنه فعلًا */
 @media(max-width:700px){
@@ -492,6 +496,7 @@ input:focus-visible,button:focus-visible,.plan:focus-within{outline:2px solid va
 <script>
 const ROOT_DOMAIN = "{{ root_domain }}";
 const TRIAL_DAYS = {{ trial_days or 14 }};
+const CSRF_TOKEN = "{{ csrf_token or '' }}";
 /* ================================================================
    Horizon Signup — wired to saas_manager endpoints with demo fallback
    ================================================================ */
@@ -508,7 +513,7 @@ let state = { request_id:null, subOK:false, plan:"Horizon Pro", demo:!HAS_BACKEN
 
 async function api(url, data){
   try{
-    const r = await fetch(url,{method:"POST",headers:{"Content-Type":"application/json","X-Frappe-CSRF-Token":(window.frappe&&frappe.csrf_token)||""},body:JSON.stringify(data||{})});
+    const r = await fetch(url,{method:"POST",headers:{"Content-Type":"application/json","X-Frappe-CSRF-Token":CSRF_TOKEN||((window.frappe&&frappe.csrf_token)||"")},body:JSON.stringify(data||{})});
     const j = await r.json();
     if(!r.ok) throw (j._server_messages? JSON.parse(JSON.parse(j._server_messages)[0]).message : (j.message||"خطأ غير متوقع"));
     return j.message ?? j;
@@ -574,10 +579,44 @@ function goStep(n){
   if(n===2){ $("otp").querySelector("input").focus(); startResend(); }
 }
 
+/* ---------- أخطاء تحت الحقل نفسه (طلب المالك) ---------- */
+function fieldErr(id, msg){
+  const inp=$(id); if(!inp) return false;
+  inp.classList.add("f-bad");
+  let n=inp.parentElement.querySelector(".f-err[data-for='"+id+"']");
+  if(!n){n=document.createElement("div");n.className="f-err";n.dataset.for=id;inp.insertAdjacentElement("afterend",n);}
+  n.textContent=msg;
+  inp.focus({preventScroll:false});
+  inp.scrollIntoView({block:"center",behavior:"smooth"});
+  return true;
+}
+function clearFieldErrs(){
+  document.querySelectorAll(".f-err").forEach(n=>n.remove());
+  document.querySelectorAll(".f-bad").forEach(n=>n.classList.remove("f-bad"));
+}
+["fn","co","em","ph"].forEach(id=>{
+  const inp=$(id);
+  if(inp) inp.addEventListener("input",()=>{
+    inp.classList.remove("f-bad");
+    const n=inp.parentElement.querySelector(".f-err[data-for='"+id+"']"); if(n) n.remove();
+  });
+});
+/* رسالة الخادم (إنجليزي غالبًا) تتترجم وتتوجه لحقلها */
+function routeServerErr(raw){
+  const s=String(raw);
+  if(/email|بريد/i.test(s)) return fieldErr("em","البريد الإلكتروني غير صالح — راجع كتابته");
+  if(/subdomain|taken|محجوز/i.test(s)){ $("subBox").classList.add("bad"); return fieldErr("sd","العنوان محجوز أو غير صالح — جرّب اسمًا آخر"); }
+  if(/too many|كثيرة/i.test(s)) return fieldErr("em","محاولات كتيرة — استنى دقايق وجرّب تاني");
+  if(/invalid request|csrf|غير صالح/i.test(s)) return fieldErr("em","انتهت صلاحية الصفحة — اعمل تحديث (سحب لتحت) وجرّب تاني");
+  if(/plan|باقة/i.test(s)) return fieldErr("sd","اختيار الباقة غير صالح — حدّث الصفحة وجرّب تاني");
+  return false;
+}
+
 /* ---------- step 1 submit ---------- */
 $("p1").addEventListener("submit", async e=>{
   e.preventDefault();
-  if(!state.subOK){ $("subBox").classList.add("bad"); $("sd").focus(); toast("اختار عنوان موقع متاح الأول", true); return; }
+  clearFieldErrs();
+  if(!state.subOK){ $("subBox").classList.add("bad"); fieldErr("sd","اختار عنوان موقع متاح الأول"); return; }
   const btn=$("cta1"); btn.classList.add("busy"); btn.disabled=true;
   const payload={contact_name:$("fn").value.trim(), business_name:$("co").value.trim(),
                  email:$("em").value.trim(), phone:$("ph").value.trim(),
@@ -589,7 +628,7 @@ $("p1").addEventListener("submit", async e=>{
     $("emEcho").textContent = payload.email;
     goStep(2);
     if(state.demo) toast("وضع تجريبي — الكود: 123456");
-  }catch(err){ toast(String(err), true); }
+  }catch(err){ if(!routeServerErr(err)) toast(String(err), true); }
   btn.classList.remove("busy"); btn.disabled=false;
 });
 
@@ -635,7 +674,17 @@ $("cta2").addEventListener("click", async ()=>{
     goStep(3); startProvision();
   }catch(err){
     $("otp").classList.add("err"); setTimeout(()=>$("otp").classList.remove("err"),500);
-    toast(String(err), true);
+    // الرسالة تحت خانات الكود نفسها بالأحمر
+    const s=String(err);
+    let m="الكود غلط — راجع الإيميل وجرّب تاني";
+    if(/expired|انتهت/i.test(s)) m="انتهت صلاحية الكود — اطلب كودًا جديدًا";
+    else if(/too many|start over/i.test(s)) m="محاولات كتيرة — اطلب كودًا جديدًا";
+    else if(/invalid request|csrf|غير صالح/i.test(s)) m="انتهت صلاحية الصفحة — اعمل تحديث وجرّب تاني";
+    let n=$("otp").parentElement.querySelector(".f-err[data-for='otp']");
+    if(!n){n=document.createElement("div");n.className="f-err";n.dataset.for="otp";$("otp").insertAdjacentElement("afterend",n);}
+    n.textContent=m;
+    boxes.forEach(b=>b.classList.add("f-bad"));
+    setTimeout(()=>boxes.forEach(b=>b.classList.remove("f-bad")),2500);
   }
   btn.classList.remove("busy"); btn.disabled=false;
 });
