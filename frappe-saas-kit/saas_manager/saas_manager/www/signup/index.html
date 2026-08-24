@@ -301,6 +301,9 @@ h1 .u::after{content:"";position:absolute;right:0;bottom:4px;height:10px;width:1
   .rise,.sk{animation:none!important;opacity:1!important;transform:none!important;filter:none!important}
   .panel.on,.done-box.show{animation:none!important;opacity:1!important;transform:none!important;filter:none!important}
   h1 .u::after{animation:none!important;transform:scaleX(1)!important}
+  /* nowrap على العنوان بيطلّع النص برّه الشاشة في العرض الضيق — بلاغ لقطة حقيقية */
+  h1 .u{white-space:normal}
+  h1{overflow-wrap:break-word}
   .plan:hover,.plan.sel{transform:none}
   .cta:hover,.cta:active{transform:none}
 }
