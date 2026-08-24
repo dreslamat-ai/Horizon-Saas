@@ -109,7 +109,9 @@ def run_bench(args: list, tenant_name: str | None = None, timeout: int = 1800):
                 skip_next = False
                 continue
             redacted.append(a)
-            if "password" in a:
+            # "secret" كمان: set-config alaa_sso_secret <قيمة> كان هيسجل
+            # السر مكشوفًا في provisioning_log
+            if "password" in a or "secret" in a:
                 skip_next = True
         _log(tenant_name, "RUN: " + " ".join(redacted))
 
@@ -223,6 +225,74 @@ def complete_site_setup(site: str, doc, tenant_name: str | None = None):
     )
 
 
+def enable_alaa(site: str, doc, tenant_name: str | None = None, trial_days: int = 14):
+    """تفعيل مساعدة ألاء للموقع: سرّ SSO + تطبيق الودجت + عميل برصيد تجريبي.
+
+    idempotent بالكامل — يصلح للمواقع القائمة كما للجديدة: install-app
+    يُتخطى لو مركَّب، وواجهة ألاء الداخلية تحدّث الاتصال فقط دون منح رصيد
+    ثانٍ لو العميل موجود.
+
+    السر (API Secret) لا يمرّ في stdout إطلاقًا — bench execute يطبع قيمة
+    العودة في لوج التجهيز، فالمفاتيح تُكتب في ملف 600 يُمسح فور الإرسال
+    لواجهة ألاء الداخلية على 127.0.0.1 (تُشفَّر هناك بـAES-256-GCM).
+    """
+    import urllib.request
+
+    internal_key = frappe.conf.get("alaa_internal_key")
+    sso_secret = frappe.conf.get("alaa_sso_secret")
+    alaa_url = frappe.conf.get("alaa_internal_url") or "http://127.0.0.1:4001/alaa"
+    if not (internal_key and sso_secret):
+        _log(tenant_name, "ألاء: alaa_internal_key/alaa_sso_secret غير مضبوطين في إعداد control — التفعيل اتخطى.")
+        return
+
+    run_bench(["--site", site, "set-config", "alaa_sso_secret", sso_secret], tenant_name)
+
+    installed = run_bench(["--site", site, "list-apps"], tenant_name)
+    if "alaa_widget" not in (installed or ""):
+        run_bench(["--site", site, "install-app", "alaa_widget"], tenant_name, timeout=2400)
+
+    key_file = f"/tmp/alaa-keys-{secrets.token_hex(8)}.json"
+    try:
+        run_bench(["--site", site, "execute",
+                   "alaa_widget.api.provision.write_admin_api_keys",
+                   "--args", json.dumps([key_file])], tenant_name)
+        with open(key_file) as f:
+            creds = json.load(f)
+    finally:
+        if os.path.exists(key_file):
+            os.remove(key_file)
+
+    body = json.dumps({
+        "site": site,
+        "companyNameAr": (doc.customer_name or "").strip() or site,
+        "apiKey": creds["key"],
+        "apiSecret": creds["secret"],
+        "trialDays": trial_days,
+    }, ensure_ascii=False).encode()
+    req = urllib.request.Request(
+        f"{alaa_url}/api/internal/provision", data=body, method="POST",
+        headers={"Content-Type": "application/json", "x-internal-key": internal_key},
+    )
+    resp = urllib.request.urlopen(req, timeout=30)
+    result = json.loads(resp.read().decode())
+    run_bench(["--site", site, "clear-cache"], tenant_name)
+    _log(tenant_name, f"ألاء اتفعّلت: عميل {result.get('customerId')}"
+         + (" (كان موجودًا — الاتصال اتحدّث فقط)" if result.get("existing") else " برصيد تجريبي"))
+
+
+def enable_alaa_for_tenant(tenant: str):
+    """تفعيل ألاء يدويًا لموقع قائم — بالاسم صراحةً عمدًا، لا كنس شامل:
+    مواقع الإنتاج المسجَّلة كبيانات وصفية لا تُلمس إلا بطلب لكل موقع.
+
+        bench --site control.horizonerp.cloud execute \\
+          saas_manager.saas_manager.provisioning.provisioner.enable_alaa_for_tenant \\
+          --args '["<Tenant Site name>"]'
+    """
+    doc = frappe.get_doc("Tenant Site", tenant)
+    enable_alaa(doc.site_name, doc, tenant_name=doc.name)
+    return f"ألاء اتفعّلت لـ{doc.site_name}"
+
+
 def provision_site(tenant: str):
     """
     End-to-end provisioning for a Tenant Site document:
@@ -281,6 +351,14 @@ def provision_site(tenant: str):
 
         # 4.5) إعداد كامل تلقائي: شركة العميل + عربي + السعودية — بلا ويزارد
         complete_site_setup(site, doc, tenant_name=tenant)
+
+        # 4.6) ألاء مع كل موقع جديد — غير قاتلة عمدًا: ألاء إضافة، وسقوطها
+        # (خدمتها واقفة مثلًا) لا يمنع العميل من نظام يعمل. العطل يتسجل.
+        try:
+            enable_alaa(site, doc, tenant_name=tenant, trial_days=plan.trial_days or 14)
+        except Exception:
+            _log(tenant, "ألاء: التفعيل فشل — الموقع شغال بدونها. التفاصيل في Error Log.")
+            frappe.log_error(frappe.get_traceback(), f"Alaa enable failed: {site}")
 
         # 5) activate trial
         trial_end = add_days(nowdate(), plan.trial_days or 14)
