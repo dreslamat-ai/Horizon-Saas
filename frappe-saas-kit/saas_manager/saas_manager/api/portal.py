@@ -4,31 +4,10 @@
 لو MyFatoorah مهيأة، التجديد يرجع رابط دفع مباشرًا بدل وضع الطلب.
 """
 
-import json
-import urllib.request
-
 import frappe
 from frappe.utils import cint
 
-from saas_manager.api.signup import _rate_limit
-
-
-def _notify_telegram(text: str):
-    token = frappe.conf.get("saas_tg_token")
-    chat = frappe.conf.get("saas_tg_chat")
-    if not (token and chat):
-        return
-    try:
-        req = urllib.request.Request(
-            f"https://api.telegram.org/bot{token}/sendMessage",
-            data=json.dumps({"chat_id": chat, "text": text}).encode(),
-            headers={"Content-Type": "application/json",
-                     "User-Agent": "horizon-saas-portal/1.0"},
-            method="POST",
-        )
-        urllib.request.urlopen(req, timeout=15)
-    except Exception:
-        frappe.log_error(frappe.get_traceback(), "Portal telegram notify failed")
+from saas_manager.api.signup import _rate_limit, notify_owner_telegram as _notify_telegram
 
 
 @frappe.whitelist(allow_guest=True)

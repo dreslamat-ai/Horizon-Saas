@@ -11,7 +11,9 @@ counters here to stay version-agnostic).
 """
 
 import hashlib
+import json as _json
 import secrets
+import urllib.request
 
 import frappe
 from frappe.utils import now_datetime, add_to_date, get_datetime, validate_email_address
@@ -20,6 +22,26 @@ from saas_manager.provisioning import provisioner
 
 OTP_TTL_MINUTES = 15
 MAX_OTP_ATTEMPTS = 5
+
+
+def notify_owner_telegram(text: str):
+    """إشعار تليجرام فوري للمالك — saas_tg_token/saas_tg_chat من site_config.
+    الفشل يُسجَّل ولا يكسر مسار العميل أبدًا."""
+    token = frappe.conf.get("saas_tg_token")
+    chat = frappe.conf.get("saas_tg_chat")
+    if not (token and chat):
+        return
+    try:
+        req = urllib.request.Request(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            data=_json.dumps({"chat_id": chat, "text": text}).encode(),
+            headers={"Content-Type": "application/json",
+                     "User-Agent": "horizon-saas/1.0"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=15)
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "Signup telegram notify failed")
 
 
 def _hash_otp(otp: str) -> str:
@@ -142,6 +164,20 @@ def verify_otp(request_id: str, otp: str):
     req.db_set("tenant_site", tenant.name)
     req.db_set("status", "Provisioned")
     frappe.db.commit()
+
+    # إشعار المالك بكل تسجيل مؤكَّد — طلب صريح: «كل تسجيل يحصل يجيلي
+    # إشعار ببيانات العميل الجديد»
+    notify_owner_telegram(
+        "🎉 عميل جديد سجّل في Horizon SaaS\n"
+        f"النشاط: {req.business_name}\n"
+        f"المسؤول: {req.get('contact_name') or '—'}\n"
+        f"البريد: {req.email}\n"
+        f"الجوال: {req.phone or '—'}\n"
+        f"الدولة: {req.get('country') or 'Saudi Arabia'}\n"
+        f"الموقع: {tenant.site_name}\n"
+        f"الباقة: {req.plan} (تجربة)\n"
+        "التجهيز شغّال دلوقتي — هيوصله بريد ببيانات دخوله خلال دقائق."
+    )
 
     frappe.enqueue(
         "saas_manager.provisioning.provisioner.provision_site",
