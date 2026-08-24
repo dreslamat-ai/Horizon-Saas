@@ -295,6 +295,15 @@ h1 .u::after{content:"";position:absolute;right:0;bottom:4px;height:10px;width:1
 .toast.show{transform:translateX(50%) translateY(0)}
 .toast.err{background:var(--red)}
 
+/* على الجوال: المحتوى يظهر فورًا ثابتًا — أنيميشن الدخول (شفافية+بلور+إزاحة)
+   تقيل على معالجات الموبايل وبيدي إحساس «عائم»، والمالك بلّغ عنه فعلًا */
+@media(max-width:700px){
+  .rise,.sk{animation:none!important;opacity:1!important;transform:none!important;filter:none!important}
+  .panel.on,.done-box.show{animation:none!important;opacity:1!important;transform:none!important;filter:none!important}
+  h1 .u::after{animation:none!important;transform:scaleX(1)!important}
+  .plan:hover,.plan.sel{transform:none}
+  .cta:hover,.cta:active{transform:none}
+}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
@@ -521,11 +530,21 @@ function checkSub(){
   if(!/^[a-z][a-z0-9-]{2,29}$/.test(v)){box.className="sub bad";h.className="hint bad";h.textContent="يبدأ بحرف إنجليزي، ٣ أحرف على الأقل";return;}
   box.className="sub checking"; h.textContent="بنتأكد من التوفر…";
   subT=setTimeout(async()=>{
-    let ok;
-    const r = await api(API.check,{subdomain:v});
+    let ok, r=null, failed=false;
+    // GET بلا جسم ولا CSRF — أبسط مسار ممكن، والفشل يتقال صراحة مش يعلّق
+    try{
+      const res = await fetch(API.check+"?subdomain="+encodeURIComponent(v));
+      const j = await res.json();
+      if(!res.ok) failed=true; else r = j.message ?? j;
+    }catch(e){ failed=true; }
+    if(sd.value!==v) return;
+    if(failed && !state.demo){
+      box.className="sub bad";h.className="hint bad";
+      h.textContent="تعذّر التحقق — تأكد من الاتصال وجرّب تاني";
+      return;
+    }
     if(r===null){ ok = !["app","www","erp","admin","test","control"].includes(v); }        // demo
     else ok = !!r.available;
-    if(sd.value!==v) return;
     if(ok){box.className="sub ok";h.className="hint ok";h.textContent=`متاح — موقعك هيكون ${v}.${ROOT_DOMAIN}`;state.subOK=true;}
     else {box.className="sub bad";h.className="hint bad";h.textContent="العنوان محجوز — جرّب اسمًا آخر";}
   }, 550);
