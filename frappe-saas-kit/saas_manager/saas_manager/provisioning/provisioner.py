@@ -148,6 +148,63 @@ def apply_plan_config(site: str, plan, tenant_name: str | None = None):
 # main provisioning job (runs on the LONG queue)
 # --------------------------------------------------------------------------- #
 
+def apply_branding(site: str, tenant_name: str | None = None):
+    """هوية Horizon من أول شاشة: اللوجو والأيقونة ملفات لكل موقع على حدة
+    (لا تأتي مع الثيم) — بلاغ حقيقي: أول مستأجر ظهر بلوجو ERPNext الخام."""
+    src_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "branding")
+    dest_dir = os.path.join(bench_dir(), "sites", site, "public", "files")
+    for fname in ("horizon-logo1.png", "horizon-icon.png"):
+        src = os.path.join(src_dir, fname)
+        if os.path.exists(src) and os.path.isdir(dest_dir):
+            shutil.copy(src, os.path.join(dest_dir, fname))
+    values = {
+        "app_name": "Horizon ERP",
+        "app_logo": "/files/horizon-logo1.png",
+        "banner_image": "/files/horizon-logo1.png",
+        "splash_image": "/files/horizon-logo1.png",
+        "favicon": "/files/horizon-icon.png",
+    }
+    run_bench(
+        ["--site", site, "execute", "frappe.db.set_value",
+         "--args", json.dumps(["Website Settings", "Website Settings", values])],
+        tenant_name,
+    )
+    run_bench(["--site", site, "clear-website-cache"], tenant_name)
+
+
+def complete_site_setup(site: str, doc, tenant_name: str | None = None):
+    """إكمال إعداد ERPNext تلقائياً — العميل يدخل نظاماً جاهزاً بالعربي بلا
+    ويزارد. طلب المالك «نختصر كل ده للعملاء» بعد ما عميلاً حقيقياً وقع في
+    الويزارد الإنجليزي بخطأ خادم (country=None في تثبيت البريسِتس)."""
+    year = nowdate()[:4]
+    name = (doc.customer_name or "").strip() or "شركتي"
+    words = [w for w in name.split() if w]
+    abbr = "".join(w[0] for w in words[:3])[:5] or "HZ"
+    args = {
+        "language": "العربية",
+        "country": "Saudi Arabia",
+        "timezone": "Asia/Riyadh",
+        "currency": "SAR",
+        "company_name": name,
+        "company_abbr": abbr,
+        # الاختياران المتاحان للسعودية (مقيسان): Standard / Standard with Numbers
+        # — المرقمة هي عرف المحاسبة في السوق السعودي
+        "chart_of_accounts": "Standard with Numbers",
+        "fy_start_date": f"{year}-01-01",
+        "fy_end_date": f"{year}-12-31",
+        "setup_demo": 0,
+        # لا full_name/email هنا: مستخدم المالك اتعمل قبلها بـadd-system-manager،
+        # وتمريرهما يخلّي الإعداد يحاول إنشاءه تانياً فيقع بـDuplicateEntryError
+        # (حصل فعلاً في أول تجربة دخان)
+    }
+    run_bench(
+        ["--site", site, "execute",
+         "frappe.desk.page.setup_wizard.setup_wizard.setup_complete",
+         "--kwargs", json.dumps({"args": args}, ensure_ascii=False)],
+        tenant_name, timeout=1800,
+    )
+
+
 def provision_site(tenant: str):
     """
     End-to-end provisioning for a Tenant Site document:
@@ -183,21 +240,29 @@ def provision_site(tenant: str):
         )
 
         # 2) install plan apps + horizon_client (limits/features enforcement — always)
-        for app in plan.apps_list() + ["horizon_client"]:
+        #    + horizon_desk_theme: هوية Horizon لازم تظهر من أول شاشة دخول
+        #    (بلاغ حقيقي: أول مستأجر اتبنى بشاشة فرابي الخام)
+        for app in plan.apps_list() + ["horizon_client", "horizon_desk_theme"]:
             run_bench(["--site", site, "install-app", app],
                       tenant_name=tenant, timeout=2400)
 
         # 3) plan metadata + limits + feature gates inside the tenant site config
         apply_plan_config(site, plan, tenant_name=tenant)
 
-        # 4) owner user as System Manager
-        #    (verify flags with `bench add-system-manager --help`)
+        # 3.5) هوية Horizon (لوجو/أيقونة/اسم) — قبل أول دخول للمستخدم
+        apply_branding(site, tenant_name=tenant)
+
+        # 4) مستخدم المالك كمدير نظام — **قبل** الإعداد التلقائي، وإلا
+        #    الإعداد ينشئه الأول وadd-system-manager يقع بـDuplicateEntryError
         run_bench(
             ["--site", site, "add-system-manager", doc.email,
              "--first-name", doc.customer_name or "Owner",
              "--password", owner_pwd],
             tenant_name=tenant,
         )
+
+        # 4.5) إعداد كامل تلقائي: شركة العميل + عربي + السعودية — بلا ويزارد
+        complete_site_setup(site, doc, tenant_name=tenant)
 
         # 5) activate trial
         trial_end = add_days(nowdate(), plan.trial_days or 14)
