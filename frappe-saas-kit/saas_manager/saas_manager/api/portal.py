@@ -11,10 +11,10 @@ from saas_manager.api.signup import _rate_limit, notify_owner_telegram as _notif
 
 
 @frappe.whitelist(allow_guest=True)
-def request_service(site: str, kind: str, plan: str = "", months: int = 1):
+def request_service(site: str, kind: str, plan: str = "", months: int = 1, points: int = 0):
     _rate_limit(f"portal:{frappe.local.request_ip}", limit=20)
 
-    if kind not in ("renew", "upgrade"):
+    if kind not in ("renew", "upgrade", "alaa_points"):
         frappe.throw("Invalid request kind.")
 
     t = frappe.db.get_value(
@@ -29,6 +29,11 @@ def request_service(site: str, kind: str, plan: str = "", months: int = 1):
         if not frappe.db.exists("SaaS Plan", {"name": plan, "enabled": 1}):
             frappe.throw("Invalid plan.")
         detail = f"طلب ترقية: {t.plan} ← {plan}"
+    elif kind == "alaa_points":
+        # الشحن الفعلي يدوي من لوحة إعدادات ألاء بعد تأكيد السداد —
+        # زي التجديد قبل MyFatoorah بالضبط: طلب + تليجرام، لا تنفيذ آلي.
+        points = max(100, min(cint(points) or 0, 50000))
+        detail = f"طلب شحن نقاط ألاء: {points} نقطة"
     else:
         detail = f"طلب تجديد: {months} شهر على باقة {t.plan}"
 
@@ -63,4 +68,49 @@ def request_service(site: str, kind: str, plan: str = "", months: int = 1):
     return {
         "mode": "request",
         "message": "وصل طلبك ✅ — فريق Horizon هيتواصل معك في نفس اليوم لإتمام السداد والتفعيل.",
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+def alaa_status(site: str):
+    """رصيد ألاء وباقتها لموقع مستأجر — تعرضه صفحة /subscription داخل موقعه.
+
+    البروكسي هنا (control ← واجهة ألاء الداخلية على 127.0.0.1) عمدًا:
+    مفتاح ألاء الداخلي يبقى في site_config بتاع control وحده، لا يوزَّع
+    على مواقع المستأجرين ولا يظهر لأي متصفح.
+    """
+    _rate_limit(f"alaa-status:{frappe.local.request_ip}", limit=30)
+
+    if not frappe.db.exists("Tenant Site", {"site_name": site, "status": ["!=", "Dropped"]}):
+        frappe.throw("Unknown site.")
+
+    internal_key = frappe.conf.get("alaa_internal_key")
+    alaa_url = frappe.conf.get("alaa_internal_url") or "http://127.0.0.1:4001/alaa"
+    if not internal_key:
+        return {"enabled": False}
+
+    import json as _json
+    import urllib.error
+    import urllib.request
+
+    req = urllib.request.Request(
+        f"{alaa_url}/api/internal/balance?site={site}",
+        headers={"x-internal-key": internal_key},
+    )
+    try:
+        data = _json.loads(urllib.request.urlopen(req, timeout=10).read().decode())
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {"enabled": False}
+        raise
+    except Exception:
+        # ألاء واقفة مؤقتًا ≠ الموقع بلا ألاء — الصفحة تخفي الكارت بس
+        return {"enabled": False}
+
+    return {
+        "enabled": True,
+        "credits_balance": data.get("creditsBalance"),
+        "subscription_status": data.get("subscriptionStatus"),
+        "subscription_end_date": (data.get("subscriptionEndDate") or "")[:10],
+        "plan": data.get("plan"),
     }

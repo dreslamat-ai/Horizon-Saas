@@ -66,6 +66,23 @@ select{font-family:inherit;font-size:14px;font-weight:700;padding:10px 14px;bord
     </div>
   </div>
 
+  <div class="card" id="alaaCard" style="display:none">
+    <div class="row" style="justify-content:space-between;margin-bottom:14px">
+      <h2 style="margin-bottom:0">🌟 ألاء — مساعدتك الذكية</h2>
+      <span class="badge" id="alaaPlanBadge"></span>
+    </div>
+    <div class="grid" style="margin-bottom:14px">
+      <div class="stat"><div class="v" id="alaaBalance">—</div><div class="l">رصيد النقاط المتبقي</div></div>
+      <div class="stat"><div class="v" id="alaaStatus">—</div><div class="l">حالة الاشتراك</div></div>
+      <div class="stat"><div class="v" id="alaaEnds">—</div><div class="l">نهاية المدة الحالية</div></div>
+    </div>
+    <h2 style="font-size:15px">شحن نقاط</h2>
+    <div class="plans" id="alaaPacks"></div>
+    <div class="row"><button class="btn" id="alaaBtn" disabled>اطلب الشحن</button></div>
+    <div class="msg" id="alaaMsg"></div>
+    <p class="note" style="margin-top:10px">كل رسالة لألاء بنقطة واحدة. طلب الشحن بيوصل فريق Horizon فورًا ويتفعّل فور تأكيد السداد.</p>
+  </div>
+
   <div class="card">
     <h2>تجديد الاشتراك</h2>
     <div class="row">
@@ -145,6 +162,49 @@ document.getElementById("upBtn").addEventListener("click", async e=>{
     const r = await portal("upgrade", {plan: upSel});
     show("upMsg", true, r.message || "وصل طلب الترقية — بيتفعّل فور تأكيد السداد.");
   }catch(err){ show("upMsg", false, String(err)); e.target.disabled = false; }
+});
+
+// ─── كارت ألاء — يظهر فقط للمواقع اللي ألاء متفعّلة عليها ───
+// الأسعار placeholder لحين اعتماد المالك — تعديلها هنا في ALAA_PACKS بس.
+const ALAA_PACKS = [
+  {points: 500,  price: 49},
+  {points: 1500, price: 129},
+  {points: 5000, price: 349},
+];
+const ALAA_STATUS_AR = {trial: "تجربة مجانية", active: "🟢 نشط", past_due: "متأخر السداد", suspended: "موقوف", cancelled: "ملغي"};
+let alaaSel = null;
+
+fetch(CONTROL + "/api/method/saas_manager.api.portal.alaa_status?site=" + encodeURIComponent(SITE))
+  .then(r=>r.json()).then(j=>{
+    const s = j.message || {};
+    if(!s.enabled) return;
+    document.getElementById("alaaCard").style.display = "";
+    document.getElementById("alaaBalance").textContent = s.credits_balance ?? "—";
+    document.getElementById("alaaStatus").textContent = ALAA_STATUS_AR[s.subscription_status] || s.subscription_status || "—";
+    document.getElementById("alaaEnds").textContent = s.subscription_end_date || "—";
+    if(s.plan) document.getElementById("alaaPlanBadge").textContent =
+      `باقتك: ${s.plan.nameAr} — ${s.plan.monthlyCreditsAllowance} نقطة/شهر`;
+    const box = document.getElementById("alaaPacks");
+    box.innerHTML = ALAA_PACKS.map(p=>`
+      <div class="plan" data-points="${p.points}">
+        <div class="nm">${p.points} نقطة</div>
+        <div class="pr">${p.price} <small>ر.س</small></div>
+        <div class="ft">رسالة لكل نقطة</div>
+      </div>`).join("");
+    box.querySelectorAll(".plan").forEach(el=>el.addEventListener("click", ()=>{
+      box.querySelectorAll(".plan").forEach(x=>x.classList.remove("sel"));
+      el.classList.add("sel"); alaaSel = el.dataset.points;
+      document.getElementById("alaaBtn").disabled = false;
+    }));
+  }).catch(()=>{ /* ألاء واقفة مؤقتًا — الكارت يفضل مخفيًا */ });
+
+document.getElementById("alaaBtn").addEventListener("click", async e=>{
+  if(!alaaSel) return;
+  e.target.disabled = true;
+  try{
+    const r = await portal("alaa_points", {points: alaaSel});
+    show("alaaMsg", true, r.message || "وصل طلب الشحن — بيتفعّل فور تأكيد السداد.");
+  }catch(err){ show("alaaMsg", false, String(err)); e.target.disabled = false; }
 });
 </script>
 </body>
