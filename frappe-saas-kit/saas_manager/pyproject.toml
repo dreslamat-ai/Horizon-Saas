@@ -1,0 +1,9 @@
+[project]
+name = "saas_manager"
+version = "0.1.0"
+description = "Frappe Bench SaaS Control Plane"
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"

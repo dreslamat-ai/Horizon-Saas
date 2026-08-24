@@ -1,0 +1,32 @@
+{
+ "doctype": "DocType",
+ "name": "SaaS Invoice",
+ "module": "Saas Manager",
+ "custom": 0,
+ "naming_rule": "Expression",
+ "autoname": "format:SI-{YYYY}-{#####}",
+ "engine": "InnoDB",
+ "field_order": ["tenant_site", "plan", "months", "column_break_1", "amount", "currency", "status",
+                 "section_mf", "mf_invoice_id", "payment_url", "paid_on", "notes"],
+ "fields": [
+  {"fieldname": "tenant_site", "fieldtype": "Link", "label": "Tenant Site", "options": "Tenant Site", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "plan", "fieldtype": "Link", "label": "Plan", "options": "SaaS Plan", "reqd": 1},
+  {"fieldname": "months", "fieldtype": "Int", "label": "Months", "default": "1", "reqd": 1},
+  {"fieldname": "column_break_1", "fieldtype": "Column Break"},
+  {"fieldname": "amount", "fieldtype": "Currency", "label": "Amount", "options": "currency", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "currency", "fieldtype": "Link", "label": "Currency", "options": "Currency", "reqd": 1},
+  {"fieldname": "status", "fieldtype": "Select", "label": "Status",
+   "options": "Pending\nPaid\nFailed\nCancelled", "default": "Pending", "in_list_view": 1, "in_standard_filter": 1},
+  {"fieldname": "section_mf", "fieldtype": "Section Break", "label": "MyFatoorah"},
+  {"fieldname": "mf_invoice_id", "fieldtype": "Data", "label": "MyFatoorah Invoice ID", "read_only": 1, "unique": 1},
+  {"fieldname": "payment_url", "fieldtype": "Small Text", "label": "Payment URL", "read_only": 1},
+  {"fieldname": "paid_on", "fieldtype": "Datetime", "label": "Paid On", "read_only": 1},
+  {"fieldname": "notes", "fieldtype": "Small Text", "label": "Notes", "read_only": 1}
+ ],
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

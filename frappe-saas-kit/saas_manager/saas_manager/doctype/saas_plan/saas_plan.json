@@ -1,0 +1,36 @@
+{
+ "doctype": "DocType",
+ "name": "SaaS Plan",
+ "module": "Saas Manager",
+ "custom": 0,
+ "autoname": "field:plan_name",
+ "naming_rule": "By fieldname",
+ "engine": "InnoDB",
+ "field_order": ["plan_name", "enabled", "monthly_price", "currency", "column_break_1", "trial_days",
+                 "section_limits", "max_users", "max_companies", "column_break_2", "max_branches", "max_space_mb",
+                 "section_apps", "apps_to_install", "section_features", "features"],
+ "fields": [
+  {"fieldname": "plan_name", "fieldtype": "Data", "label": "Plan Name", "reqd": 1, "unique": 1},
+  {"fieldname": "enabled", "fieldtype": "Check", "label": "Enabled", "default": "1"},
+  {"fieldname": "monthly_price", "fieldtype": "Currency", "label": "Monthly Price", "options": "currency"},
+  {"fieldname": "currency", "fieldtype": "Link", "label": "Currency", "options": "Currency", "default": "SAR"},
+  {"fieldname": "column_break_1", "fieldtype": "Column Break"},
+  {"fieldname": "trial_days", "fieldtype": "Int", "label": "Trial Days", "default": "14"},
+  {"fieldname": "section_limits", "fieldtype": "Section Break", "label": "Limits (0 = unlimited)"},
+  {"fieldname": "max_users", "fieldtype": "Int", "label": "Max Users", "default": "0"},
+  {"fieldname": "max_companies", "fieldtype": "Int", "label": "Max Companies", "default": "1"},
+  {"fieldname": "column_break_2", "fieldtype": "Column Break"},
+  {"fieldname": "max_branches", "fieldtype": "Int", "label": "Max Branches", "default": "1"},
+  {"fieldname": "max_space_mb", "fieldtype": "Int", "label": "Max Space (MB)", "default": "5120"},
+  {"fieldname": "section_apps", "fieldtype": "Section Break", "label": "Apps"},
+  {"fieldname": "apps_to_install", "fieldtype": "Small Text", "label": "Apps To Install (one per line)",
+   "description": "Bench app ids (technical, never shown to customers). horizon_client is always installed automatically."},
+  {"fieldname": "section_features", "fieldtype": "Section Break", "label": "Feature Gates"},
+  {"fieldname": "features", "fieldtype": "Table", "label": "Features", "options": "SaaS Plan Feature"}
+ ],
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

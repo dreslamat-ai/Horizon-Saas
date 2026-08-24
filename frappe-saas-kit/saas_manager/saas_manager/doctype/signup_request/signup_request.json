@@ -1,0 +1,129 @@
+{
+ "doctype": "DocType",
+ "name": "Signup Request",
+ "module": "Saas Manager",
+ "custom": 0,
+ "naming_rule": "Expression",
+ "autoname": "format:SR-{YYYY}-{#####}",
+ "engine": "InnoDB",
+ "field_order": [
+  "business_name",
+  "contact_name",
+  "email",
+  "phone",
+  "column_break_1",
+  "subdomain",
+  "plan",
+  "country",
+  "section_state",
+  "status",
+  "verified",
+  "otp_hash",
+  "otp_expires_at",
+  "attempts",
+  "tenant_site"
+ ],
+ "fields": [
+  {
+   "fieldname": "business_name",
+   "fieldtype": "Data",
+   "label": "Business Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "contact_name",
+   "fieldtype": "Data",
+   "label": "Contact Name"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email",
+   "reqd": 1
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subdomain",
+   "fieldtype": "Data",
+   "label": "Subdomain",
+   "reqd": 1
+  },
+  {
+   "fieldname": "plan",
+   "fieldtype": "Link",
+   "label": "Plan",
+   "options": "SaaS Plan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Data",
+   "label": "Country"
+  },
+  {
+   "fieldname": "section_state",
+   "fieldtype": "Section Break",
+   "label": "State"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Pending OTP\nVerified\nProvisioned\nExpired",
+   "default": "Pending OTP"
+  },
+  {
+   "fieldname": "verified",
+   "fieldtype": "Check",
+   "label": "Email Verified",
+   "default": "0"
+  },
+  {
+   "fieldname": "otp_hash",
+   "fieldtype": "Data",
+   "label": "OTP Hash",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "otp_expires_at",
+   "fieldtype": "Datetime",
+   "label": "OTP Expires At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attempts",
+   "fieldtype": "Int",
+   "label": "OTP Attempts",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tenant_site",
+   "fieldtype": "Link",
+   "label": "Tenant Site",
+   "options": "Tenant Site",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

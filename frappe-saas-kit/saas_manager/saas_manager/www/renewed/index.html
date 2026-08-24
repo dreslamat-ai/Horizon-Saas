@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light"><title>Horizon — الدفع</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap" rel="stylesheet">
+<style>html{color-scheme:light}body{font-family:Cairo,sans-serif;background:#F6F7F5;color:#221f1f;
+display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;margin:0}
+.c{background:#fff;border-radius:16px;border-top:4px solid #1D2D44;box-shadow:0 12px 40px rgba(29,45,68,.15);
+padding:34px 26px;max-width:420px;margin:16px}
+h1{font-size:20px;font-weight:900}.ok h1{color:#5083BC}.err h1{color:#B04A3F}
+p{color:#5b6472;font-size:14px;margin-top:8px}</style></head>
+<body><div class="c" id="c"><h1 id="t"></h1><p id="m"></p></div>
+<script>
+var err=new URLSearchParams(location.search).get('err');
+var c=document.getElementById('c');
+if(err){c.className='c err';document.getElementById('t').textContent='لم تكتمل عملية الدفع';
+document.getElementById('m').textContent='لم يتم خصم أي مبلغ. تقدر تعيد المحاولة من نفس رابط الدفع، أو تتواصل معنا.';}
+else{c.className='c ok';document.getElementById('t').textContent='تم استلام الدفع ✅';
+document.getElementById('m').textContent='الاء بتتحقق من العملية وبتفعّل اشتراكك خلال لحظات — هيوصلك إيميل تأكيد.';}
+</script></body></html>

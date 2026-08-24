@@ -1,0 +1,18 @@
+{
+ "doctype": "DocType",
+ "name": "SaaS Plan Feature",
+ "module": "Saas Manager",
+ "custom": 0,
+ "istable": 1,
+ "engine": "InnoDB",
+ "field_order": ["feature_key", "feature_value"],
+ "fields": [
+  {"fieldname": "feature_key", "fieldtype": "Data", "label": "Feature Key", "reqd": 1, "in_list_view": 1,
+   "description": "e.g. advanced_reports, api_access, multi_currency"},
+  {"fieldname": "feature_value", "fieldtype": "Data", "label": "Value", "default": "1", "in_list_view": 1,
+   "description": "1 = enabled, 0 = disabled"}
+ ],
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
