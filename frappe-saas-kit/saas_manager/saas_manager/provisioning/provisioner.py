@@ -285,7 +285,7 @@ def enable_alaa_for_tenant(tenant: str):
     مواقع الإنتاج المسجَّلة كبيانات وصفية لا تُلمس إلا بطلب لكل موقع.
 
         bench --site control.horizonerp.cloud execute \\
-          saas_manager.saas_manager.provisioning.provisioner.enable_alaa_for_tenant \\
+          saas_manager.provisioning.provisioner.enable_alaa_for_tenant \\
           --args '["<Tenant Site name>"]'
     """
     doc = frappe.get_doc("Tenant Site", tenant)
