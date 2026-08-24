@@ -59,6 +59,10 @@
       // الشريط في الرئيسية بس (طلب المالك) لو الثيم موجود؛
       // لو الثيم مش متركب يفضل ظاهر في كل الصفحات
       function sync() {
+        // رايل الثيم عمود ثابت 68px على يمين الشاشة (فيزيائيًا) — الشريط
+        // كان بيمتد تحته فأول النص يتقص (بلاغ لقطة حقيقي). JS مش بيتقلب
+        // RTL فالقيمة فيزيائية مباشرة.
+        bar.style.right = document.querySelector(".h-rail") ? "68px" : "0";
         var launcher = document.querySelector(".h-desktop-launcher");
         if (!launcher) { bar.style.display = "block"; document.body.classList.remove("h-has-launcher"); return; }
         document.body.classList.add("h-has-launcher");
