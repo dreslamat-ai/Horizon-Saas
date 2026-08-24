@@ -14,7 +14,7 @@ from saas_manager.api.signup import _rate_limit, notify_owner_telegram as _notif
 def request_service(site: str, kind: str, plan: str = "", months: int = 1, points: int = 0):
     _rate_limit(f"portal:{frappe.local.request_ip}", limit=20)
 
-    if kind not in ("renew", "upgrade", "alaa_points"):
+    if kind not in ("renew", "upgrade", "alaa_points", "alaa_plan"):
         frappe.throw("Invalid request kind.")
 
     t = frappe.db.get_value(
@@ -34,6 +34,13 @@ def request_service(site: str, kind: str, plan: str = "", months: int = 1, point
         # زي التجديد قبل MyFatoorah بالضبط: طلب + تليجرام، لا تنفيذ آلي.
         points = max(100, min(cint(points) or 0, 50000))
         detail = f"طلب شحن نقاط ألاء: {points} نقطة"
+    elif kind == "alaa_plan":
+        # اسم باقة ألاء حر (مصدره alaa_plans عند ألاء لا SaaS Plan هنا) —
+        # يُقصّ فقط، والتحقق الفعلي بشري: التفعيل يدوي من لوحة ألاء بعد السداد
+        plan = (plan or "").strip()[:60]
+        if not plan:
+            frappe.throw("Invalid plan.")
+        detail = f"طلب باقة ألاء: {plan}"
     else:
         detail = f"طلب تجديد: {months} شهر على باقة {t.plan}"
 
@@ -107,10 +114,21 @@ def alaa_status(site: str):
         # ألاء واقفة مؤقتًا ≠ الموقع بلا ألاء — الصفحة تخفي الكارت بس
         return {"enabled": False}
 
+    # باقات ألاء المتاحة للترقية — فشلها لا يُسقط عرض الرصيد
+    plans = []
+    try:
+        preq = urllib.request.Request(
+            f"{alaa_url}/api/internal/plans", headers={"x-internal-key": internal_key},
+        )
+        plans = _json.loads(urllib.request.urlopen(preq, timeout=10).read().decode()).get("plans") or []
+    except Exception:
+        pass
+
     return {
         "enabled": True,
         "credits_balance": data.get("creditsBalance"),
         "subscription_status": data.get("subscriptionStatus"),
         "subscription_end_date": (data.get("subscriptionEndDate") or "")[:10],
         "plan": data.get("plan"),
+        "plans": plans,
     }

@@ -76,11 +76,15 @@ select{font-family:inherit;font-size:14px;font-weight:700;padding:10px 14px;bord
       <div class="stat"><div class="v" id="alaaStatus">—</div><div class="l">حالة الاشتراك</div></div>
       <div class="stat"><div class="v" id="alaaEnds">—</div><div class="l">نهاية المدة الحالية</div></div>
     </div>
-    <h2 style="font-size:15px">شحن نقاط</h2>
+    <h2 style="font-size:15px">باقات ألاء الشهرية</h2>
+    <div class="plans" id="alaaPlans"></div>
+    <div class="row"><button class="btn alt" id="alaaPlanBtn" disabled>اطلب الباقة</button></div>
+    <div class="msg" id="alaaPlanMsg"></div>
+    <h2 style="font-size:15px;margin-top:16px">شحن نقاط</h2>
     <div class="plans" id="alaaPacks"></div>
     <div class="row"><button class="btn" id="alaaBtn" disabled>اطلب الشحن</button></div>
     <div class="msg" id="alaaMsg"></div>
-    <p class="note" style="margin-top:10px">كل رسالة لألاء بنقطة واحدة. طلب الشحن بيوصل فريق Horizon فورًا ويتفعّل فور تأكيد السداد.</p>
+    <p class="note" style="margin-top:10px">كل رسالة لألاء بنقطة واحدة. الطلبات بتوصل فريق Horizon فورًا وتتفعّل فور تأكيد السداد.</p>
   </div>
 
   <div class="card">
@@ -173,6 +177,17 @@ const ALAA_PACKS = [
 ];
 const ALAA_STATUS_AR = {trial: "تجربة مجانية", active: "🟢 نشط", past_due: "متأخر السداد", suspended: "موقوف", cancelled: "ملغي"};
 let alaaSel = null;
+let alaaPlanSel = null;
+
+// وصف كل باقة يتبني من أعلامها الفعلية — مش نص ثابت ينسى يتحدث مع الباقة
+function alaaPlanFeatures(p){
+  const f = ["استعلام وتقارير وإرشاد"];
+  if(p.allowWrites) f.push("تسجيل المستندات");
+  if(p.allowDepartments) f.push("فريق الأقسام الأربعة");
+  if(p.allowTelegram) f.push("بوت تليجرام");
+  if(p.allowDailyDigest) f.push("ملخص يومي استباقي");
+  return f.join(" · ");
+}
 
 fetch(CONTROL + "/api/method/saas_manager.api.portal.alaa_status?site=" + encodeURIComponent(SITE))
   .then(r=>r.json()).then(j=>{
@@ -184,6 +199,24 @@ fetch(CONTROL + "/api/method/saas_manager.api.portal.alaa_status?site=" + encode
     document.getElementById("alaaEnds").textContent = s.subscription_end_date || "—";
     if(s.plan) document.getElementById("alaaPlanBadge").textContent =
       `باقتك: ${s.plan.nameAr} — ${s.plan.monthlyCreditsAllowance} نقطة/شهر`;
+    const planBox = document.getElementById("alaaPlans");
+    const plans = (s.plans || []).filter(p=>p.nameAr !== (s.plan && s.plan.nameAr));
+    if(plans.length){
+      planBox.innerHTML = plans.map(p=>`
+        <div class="plan" data-alaa-plan="${p.nameAr}">
+          <div class="nm">${p.nameAr}</div>
+          <div class="pr">${Math.round(p.monthlyPriceSar)} <small>ر.س/شهر</small></div>
+          <div class="ft">${p.monthlyCreditsAllowance} نقطة شهريًا</div>
+          <div class="ft" style="margin-top:4px">${alaaPlanFeatures(p)}</div>
+        </div>`).join("");
+      planBox.querySelectorAll(".plan").forEach(el=>el.addEventListener("click", ()=>{
+        planBox.querySelectorAll(".plan").forEach(x=>x.classList.remove("sel"));
+        el.classList.add("sel"); alaaPlanSel = el.dataset.alaaPlan;
+        document.getElementById("alaaPlanBtn").disabled = false;
+      }));
+    } else {
+      planBox.innerHTML = '<div class="note">أنت على أعلى باقة لألاء 👌</div>';
+    }
     const box = document.getElementById("alaaPacks");
     box.innerHTML = ALAA_PACKS.map(p=>`
       <div class="plan" data-points="${p.points}">
@@ -205,6 +238,15 @@ document.getElementById("alaaBtn").addEventListener("click", async e=>{
     const r = await portal("alaa_points", {points: alaaSel});
     show("alaaMsg", true, r.message || "وصل طلب الشحن — بيتفعّل فور تأكيد السداد.");
   }catch(err){ show("alaaMsg", false, String(err)); e.target.disabled = false; }
+});
+
+document.getElementById("alaaPlanBtn").addEventListener("click", async e=>{
+  if(!alaaPlanSel) return;
+  e.target.disabled = true;
+  try{
+    const r = await portal("alaa_plan", {plan: alaaPlanSel});
+    show("alaaPlanMsg", true, r.message || "وصل طلب الباقة — بتتفعّل فور تأكيد السداد.");
+  }catch(err){ show("alaaPlanMsg", false, String(err)); e.target.disabled = false; }
 });
 </script>
 </body>
