@@ -136,6 +136,7 @@ def verify_otp(request_id: str, otp: str):
         "contact_name": req.get("contact_name"),
         "email": req.email,
         "phone": req.phone,
+        "country": req.get("country"),
     }).insert(ignore_permissions=True)
 
     req.db_set("tenant_site", tenant.name)

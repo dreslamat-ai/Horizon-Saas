@@ -172,6 +172,20 @@ def apply_branding(site: str, tenant_name: str | None = None):
     run_bench(["--site", site, "clear-website-cache"], tenant_name)
 
 
+# الدولة تحدد العملة والتوقيت — نفس القائمة المعروضة في نموذج التسجيل
+COUNTRY_DEFAULTS = {
+    "Saudi Arabia": ("SAR", "Asia/Riyadh"),
+    "United Arab Emirates": ("AED", "Asia/Dubai"),
+    "Egypt": ("EGP", "Africa/Cairo"),
+    "Kuwait": ("KWD", "Asia/Kuwait"),
+    "Qatar": ("QAR", "Asia/Qatar"),
+    "Bahrain": ("BHD", "Asia/Bahrain"),
+    "Oman": ("OMR", "Asia/Muscat"),
+    "Jordan": ("JOD", "Asia/Amman"),
+    "Iraq": ("IQD", "Asia/Baghdad"),
+}
+
+
 def complete_site_setup(site: str, doc, tenant_name: str | None = None):
     """إكمال إعداد ERPNext تلقائياً — العميل يدخل نظاماً جاهزاً بالعربي بلا
     ويزارد. طلب المالك «نختصر كل ده للعملاء» بعد ما عميلاً حقيقياً وقع في
@@ -180,11 +194,15 @@ def complete_site_setup(site: str, doc, tenant_name: str | None = None):
     name = (doc.customer_name or "").strip() or "شركتي"
     words = [w for w in name.split() if w]
     abbr = "".join(w[0] for w in words[:3])[:5] or "HZ"
+    country = doc.get("country") or "Saudi Arabia"
+    if country not in COUNTRY_DEFAULTS:
+        country = "Saudi Arabia"
+    currency, timezone = COUNTRY_DEFAULTS[country]
     args = {
         "language": "العربية",
-        "country": "Saudi Arabia",
-        "timezone": "Asia/Riyadh",
-        "currency": "SAR",
+        "country": country,
+        "timezone": timezone,
+        "currency": currency,
         "company_name": name,
         "company_abbr": abbr,
         # الاختياران المتاحان للسعودية (مقيسان): Standard / Standard with Numbers

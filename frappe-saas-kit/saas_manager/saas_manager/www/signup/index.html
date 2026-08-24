@@ -176,10 +176,10 @@ h1 .u::after{content:"";position:absolute;right:0;bottom:4px;height:10px;width:1
 @media(max-width:520px){.grid2{grid-template-columns:1fr}}
 .f{margin-bottom:15px}
 .f label{display:block;font-size:12.5px;font-weight:800;color:var(--navy-700);margin-bottom:7px}
-.f input{width:100%;font-family:inherit;font-size:14.5px;font-weight:600;color:var(--ink);
+.f input,.f select{width:100%;font-family:inherit;font-size:14.5px;font-weight:600;color:var(--ink);
   background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r-sm);padding:12px 15px;outline:none;
   transition:border-color .25s,box-shadow .25s,background .25s}
-.f input:focus{border-color:var(--navy);background:#fff;box-shadow:0 0 0 4px rgba(29,45,68,.08)}
+.f input:focus,.f select:focus{border-color:var(--navy);background:#fff;box-shadow:0 0 0 4px rgba(29,45,68,.08)}
 .f .hint{font-size:12px;color:#5F6875;margin-top:6px;font-weight:600;min-height:16px;transition:color .3s}
 .f .hint.ok{color:var(--blue)}
 .f .hint.bad{color:var(--red)}
@@ -369,6 +369,21 @@ input:focus-visible,button:focus-visible,.plan:focus-within{outline:2px solid va
               <div class="hint" id="emH">هنبعت عليه كود التأكيد</div></div>
             <div class="f"><label for="ph">رقم الجوال</label>
               <input id="ph" type="tel" required placeholder="05xxxxxxxx" autocomplete="tel" dir="ltr" style="text-align:left"></div>
+          </div>
+          <div class="f">
+            <label for="ct">الدولة</label>
+            <select id="ct" required>
+              <option value="Saudi Arabia" selected>السعودية</option>
+              <option value="United Arab Emirates">الإمارات</option>
+              <option value="Egypt">مصر</option>
+              <option value="Kuwait">الكويت</option>
+              <option value="Qatar">قطر</option>
+              <option value="Bahrain">البحرين</option>
+              <option value="Oman">عُمان</option>
+              <option value="Jordan">الأردن</option>
+              <option value="Iraq">العراق</option>
+            </select>
+            <div class="hint">بتحدد العملة والتوقيت والإعدادات الضريبية لنظامك</div>
           </div>
           <div class="f">
             <label for="sd">عنوان موقعك</label>
@@ -630,7 +645,7 @@ $("p1").addEventListener("submit", async e=>{
   const btn=$("cta1"); btn.classList.add("busy"); btn.disabled=true;
   const payload={contact_name:$("fn").value.trim(), business_name:$("co").value.trim(),
                  email:$("em").value.trim(), phone:$("ph").value.trim(),
-                 subdomain:sd.value, plan:state.plan};
+                 country:$("ct").value, subdomain:sd.value, plan:state.plan};
   lastPayload = payload;
   try{
     const r = await api(API.request, payload);

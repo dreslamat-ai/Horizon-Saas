@@ -1,10 +1,7 @@
 {
- "doctype": "DocType",
- "name": "Tenant Site",
- "module": "Saas Manager",
- "custom": 0,
  "autoname": "field:site_name",
- "naming_rule": "By fieldname",
+ "custom": 0,
+ "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "subdomain",
@@ -16,6 +13,7 @@
   "contact_name",
   "email",
   "phone",
+  "country",
   "section_dates",
   "trial_ends_on",
   "subscription_ends_on",
@@ -38,18 +36,18 @@
    "fieldname": "site_name",
    "fieldtype": "Data",
    "label": "Full Site Name",
+   "read_only": 1,
    "reqd": 1,
-   "unique": 1,
-   "read_only": 1
+   "unique": 1
   },
   {
+   "default": "Pending",
    "fieldname": "status",
    "fieldtype": "Select",
-   "label": "Status",
-   "options": "Pending\nProvisioning\nActive\nSuspended\nDropped\nFailed",
-   "default": "Pending",
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending\nProvisioning\nActive\nSuspended\nDropped\nFailed"
   },
   {
    "fieldname": "column_break_1",
@@ -58,16 +56,16 @@
   {
    "fieldname": "plan",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Plan",
    "options": "SaaS Plan",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
    "fieldname": "customer_name",
    "fieldtype": "Data",
-   "label": "Customer / Business Name",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "label": "Customer / Business Name"
   },
   {
    "fieldname": "contact_name",
@@ -85,6 +83,12 @@
    "fieldname": "phone",
    "fieldtype": "Data",
    "label": "Phone"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Data",
+   "label": "Country",
+   "read_only": 1
   },
   {
    "fieldname": "section_dates",
@@ -124,10 +128,10 @@
    "read_only": 1
   },
   {
+   "collapsible": 1,
    "fieldname": "section_log",
    "fieldtype": "Section Break",
-   "label": "Provisioning Log",
-   "collapsible": 1
+   "label": "Provisioning Log"
   },
   {
    "fieldname": "provisioning_log",
@@ -136,13 +140,16 @@
    "read_only": 1
   }
  ],
+ "module": "Saas Manager",
+ "name": "Tenant Site",
+ "naming_rule": "By fieldname",
  "permissions": [
   {
-   "role": "System Manager",
-   "read": 1,
-   "write": 1,
    "create": 1,
-   "delete": 1
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
   }
  ],
  "sort_field": "modified",
