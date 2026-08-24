@@ -14,10 +14,11 @@
       var closing = !expired && d.days_left <= 7;
       var bg = expired ? "#B04A3F" : closing ? "#B8860B" : "#1D2D44";
       var txt = expired
-        ? "انتهى اشتراكك (" + (d.plan || "Horizon") + ") — اضغط للتجديد الآن"
+        ? "انتهى اشتراكك (" + (d.plan || "Horizon") + ")"
         : closing
-          ? "باقتك (" + (d.plan || "Horizon") + ") تنتهي خلال " + d.days_left + " يوم — اضغط للتجديد"
-          : "الفترة التجريبية: باقي " + d.days_left + " يوم · إدارة الاشتراك";
+          ? "باقتك (" + (d.plan || "Horizon") + ") تنتهي خلال " + d.days_left + " يوم"
+          : "الفترة التجريبية: باقي " + d.days_left + " يوم";
+      var btnLabel = expired || closing ? "جدّد الآن" : "إدارة الاشتراك";
 
       var bar = document.createElement("div");
       bar.id = "h-trial-bar";
@@ -25,9 +26,25 @@
       bar.style.cssText =
         "position:fixed;top:var(--navbar-height,48px);right:0;left:0;z-index:900;" +
         "background:" + bg + ";color:#fff;font-family:Cairo,sans-serif;font-weight:700;" +
-        "cursor:pointer;text-align:center;padding:9px 14px;font-size:13.5px;" +
+        "cursor:pointer;text-align:center;padding:7px 14px;font-size:13.5px;" +
+        "display:flex;align-items:center;justify-content:center;gap:12px;" +
         "box-shadow:0 2px 8px rgba(29,45,68,.18)";
-      bar.textContent = txt;
+
+      var label = document.createElement("span");
+      label.textContent = txt;
+
+      // زرار «إدارة الاشتراك» بستروك أبيض + لمسة 3D (طلب المالك)
+      var btn = document.createElement("span");
+      btn.textContent = btnLabel;
+      btn.style.cssText =
+        "display:inline-block;border:1.5px solid rgba(255,255,255,.95);" +
+        "border-radius:999px;padding:3px 16px;font-weight:800;font-size:12.5px;" +
+        "background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.06));" +
+        "box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 5px rgba(0,0,0,.25);" +
+        "white-space:nowrap";
+
+      bar.appendChild(label);
+      bar.appendChild(btn);
       bar.addEventListener("click", function () { window.location.href = "/subscription"; });
       document.body.appendChild(bar);
 
