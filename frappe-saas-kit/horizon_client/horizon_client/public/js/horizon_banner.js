@@ -26,8 +26,8 @@
       bar.style.cssText =
         "position:fixed;top:var(--navbar-height,48px);right:0;left:0;z-index:900;" +
         "background:" + bg + ";color:#fff;font-family:Cairo,sans-serif;font-weight:700;" +
-        "cursor:pointer;text-align:center;padding:7px 14px;font-size:13.5px;" +
-        "display:flex;align-items:center;justify-content:center;gap:12px;" +
+        "cursor:pointer;text-align:right;padding:7px 16px;font-size:13.5px;" +
+        "display:flex;align-items:center;justify-content:space-between;gap:12px;" +
         "box-shadow:0 2px 8px rgba(29,45,68,.18)";
 
       var label = document.createElement("span");
