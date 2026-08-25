@@ -24,10 +24,13 @@ REGION_BY_COUNTRY = {
 }
 
 # باقة ⟵ منطقة ⟵ (السعر الشهري، العملة). الخليج يُقرأ من القاعدة مباشرة.
+# سلم فئة الـERP الكامل (قرار المالك ٢٥ أغسطس بعد مراجعة D365/SAP/NetSuite/
+# Odoo/SMACC): الخليج 299/699/1499 ر.س — ومصر والأردن بنفس نسب السلم
+# السابق (~٣٨٪ للجنيه و~٧٥٪ للدولار من المكافئ).
 REGIONAL_PRICES = {
-    "Horizon Basic": {"egypt": (499, "EGP"), "levant": (19, "USD")},
-    "Horizon Pro": {"egypt": (1299, "EGP"), "levant": (49, "USD")},
-    "Horizon Enterprise": {"egypt": (2499, "EGP"), "levant": (99, "USD")},
+    "Horizon Basic": {"egypt": (1499, "EGP"), "levant": (59, "USD")},
+    "Horizon Pro": {"egypt": (3499, "EGP"), "levant": (139, "USD")},
+    "Horizon Enterprise": {"egypt": (7499, "EGP"), "levant": (299, "USD")},
 }
 
 
