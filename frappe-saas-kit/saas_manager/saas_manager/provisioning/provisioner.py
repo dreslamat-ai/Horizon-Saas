@@ -219,6 +219,9 @@ def complete_site_setup(site: str, doc, tenant_name: str | None = None):
         # وتمريرهما يخلّي الإعداد يحاول إنشاءه تانياً فيقع بـDuplicateEntryError
         # (حصل فعلاً في أول تجربة دخان)
     }
+    # عملة الموقع تتثبت في site_config — hook قفل العملة في horizon_client
+    # يقرأها ويمنع تغييرها من داخل النظام (تسعير العميل مربوط ببلده)
+    run_bench(["--site", site, "set-config", "saas_currency", currency], tenant_name)
     run_bench(
         ["--site", site, "execute",
          "frappe.desk.page.setup_wizard.setup_wizard.setup_complete",

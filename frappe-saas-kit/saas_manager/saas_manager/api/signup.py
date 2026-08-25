@@ -17,6 +17,8 @@ import urllib.request
 
 import frappe
 
+from saas_manager.geo import detect_country as _detect_country
+
 from saas_manager import emails
 from frappe.utils import now_datetime, add_to_date, get_datetime, validate_email_address
 
@@ -62,13 +64,17 @@ def _rate_limit(key: str, limit: int, window_sec: int = 3600):
 
 @frappe.whitelist(allow_guest=True)
 def get_plans():
-    return frappe.get_all(
+    from saas_manager.geo import detect_country
+    from saas_manager.pricing import localize_plan
+    country = detect_country()
+    plans = frappe.get_all(
         "SaaS Plan",
         filters={"enabled": 1},
         fields=["name", "plan_name", "monthly_price", "currency",
                 "max_users", "max_space_mb", "trial_days"],
         order_by="monthly_price asc",
     )
+    return {"country": country, "plans": [localize_plan(p, country) for p in plans]}
 
 
 @frappe.whitelist(allow_guest=True)
@@ -102,7 +108,9 @@ def request_signup(business_name: str, email: str, subdomain: str,
         "contact_name": (contact_name or "").strip()[:140],
         "email": email,
         "phone": (phone or "").strip()[:30],
-        "country": (country or "").strip()[:60],
+        # بلد المتصفح يُتجاهل عمدًا (منع تلاعب الأسعار) — الاكتشاف من الـIP
+        # حصرًا على الخادم، والمجهول ⟵ السعودية (أعلى تسعيرة، لا حافز تحايل)
+        "country": _detect_country(),
         "subdomain": subdomain,
         "plan": plan,
         "status": "Pending OTP",

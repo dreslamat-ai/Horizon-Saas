@@ -8,8 +8,11 @@ app_license = "MIT"
 # limits are enforced server-side on validate — cannot be bypassed from UI or API
 doc_events = {
     "User": {"validate": "horizon_client.limits.check_user_limit"},
-    "Company": {"validate": "horizon_client.limits.check_company_limit"},
+    "Company": {"validate": ["horizon_client.limits.check_company_limit",
+                             "horizon_client.limits.enforce_currency"]},
     "Branch": {"validate": "horizon_client.limits.check_branch_limit"},
+    # العملة مثبتة من بلد الاشتراك — تغييرها يغيّر التسعير فيُمنع من داخل النظام
+    "Global Defaults": {"validate": "horizon_client.limits.enforce_currency"},
 }
 
 # subscription banner (days-left warning) on every Desk page

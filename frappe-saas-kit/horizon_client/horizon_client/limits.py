@@ -77,6 +77,24 @@ def _check_count(doctype, key, doc, msg, title):
 # feature gates
 # ------------------------------------------------------------------ #
 
+def enforce_currency(doc, method=None):
+    """عملة الموقع مثبتة من بلد الاشتراك (saas_currency في site_config).
+
+    طلب المالك (٢٥ أغسطس): «العميل مايقدرش يغير العملة من داخل النظام
+    لمنع التلاعب» — تسعيره مربوط ببلده المكتشف من الـIP وقت التسجيل.
+    غياب المفتاح (مواقع قديمة غير مُدارة) = لا قفل، لا نكسر موقعًا قائمًا.
+    """
+    locked = frappe.conf.get("saas_currency")
+    if not locked:
+        return
+    val = doc.get("default_currency")
+    if val and val != locked:
+        frappe.throw(
+            _("عملة نظامك مثبتة على {0} حسب بلد اشتراكك ولا يمكن تغييرها من داخل النظام. لو محتاج تغييرها فعلاً تواصل مع دعم Horizon.").format(locked),
+            title=_("العملة مقفولة"),
+        )
+
+
 def has_feature(key: str) -> bool:
     """Use anywhere in server code: from horizon_client.limits import has_feature"""
     feats = frappe.conf.get("saas_features") or {}

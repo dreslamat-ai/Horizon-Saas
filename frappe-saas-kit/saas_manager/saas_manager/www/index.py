@@ -6,13 +6,19 @@ def get_context(context):
     the signup page can never disagree about pricing."""
     context.no_cache = 1
     context.root_domain = frappe.conf.get("saas_root_domain") or "horizonerp.cloud"
-    context.plans = frappe.get_all(
-        "SaaS Plan",
-        filters={"enabled": 1},
-        fields=["name", "plan_name", "monthly_price", "currency",
-                "max_users", "max_companies", "max_branches", "trial_days"],
-        order_by="monthly_price asc",
-    )
+    from saas_manager.geo import detect_country
+    from saas_manager.pricing import localize_plan
+    context.detected_country = detect_country()
+    context.plans = [
+        localize_plan(p, context.detected_country)
+        for p in frappe.get_all(
+            "SaaS Plan",
+            filters={"enabled": 1},
+            fields=["name", "plan_name", "monthly_price", "currency",
+                    "max_users", "max_companies", "max_branches", "trial_days"],
+            order_by="monthly_price asc",
+        )
+    ]
     # positional taglines: the plan DocType has no marketing copy field, and
     # adding one would put website wording in an operational record.
     context.plan_desc = [

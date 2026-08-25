@@ -143,7 +143,10 @@ document.getElementById("renewBtn").addEventListener("click", async e=>{
 
 fetch(CONTROL + "/api/method/saas_manager.api.signup.get_plans")
   .then(r=>r.json()).then(j=>{
-    const plans = (j.message || []).filter(p=>p.name !== CUR_PLAN);
+    // get_plans بقت ترجع {country, plans} بأسعار بلد الزائر — والمصفوفة
+    // المجردة شكل قديم يُقبل احتياطًا لو الكاش قدّم نسخة سابقة
+    const list = Array.isArray(j.message) ? j.message : ((j.message || {}).plans || []);
+    const plans = list.filter(p=>p.name !== CUR_PLAN);
     const box = document.getElementById("upPlans");
     if(!plans.length){ box.innerHTML = '<div class="note">أنت على أعلى باقة 👌</div>'; return; }
     box.innerHTML = plans.map(p=>`
