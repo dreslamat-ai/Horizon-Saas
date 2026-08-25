@@ -358,8 +358,11 @@ input:focus-visible,button:focus-visible,.plan:focus-within{outline:2px solid va
 <div class="mesh"></div>
 
 <header class="top">
-  <div class="brand"><span class="h">H</span> Horizon <span class="sub-brand">AI Powered ERP</span></div>
-  <div class="aid"><span class="dot"></span> الاء — جاهزة لتجهيز موقعك</div>
+  <a class="brand" href="/" style="text-decoration:none;color:inherit" title="الرئيسية"><span class="h">H</span> Horizon <span class="sub-brand">AI Powered ERP</span></a>
+  <div style="display:flex;align-items:center;gap:14px">
+    <a href="/" style="font-size:12.5px;font-weight:800;color:#3D5170;text-decoration:none">← الرئيسية</a>
+    <div class="aid"><span class="dot"></span> الاء — جاهزة لتجهيز موقعك</div>
+  </div>
 </header>
 
 <main class="shell">
@@ -456,7 +459,7 @@ input:focus-visible,button:focus-visible,.plan:focus-within{outline:2px solid va
               <input inputmode="numeric" maxlength="1" aria-label="الرقم 5">
               <input inputmode="numeric" maxlength="1" aria-label="الرقم 6">
             </div>
-            <div class="resend">ماوصلكش؟ <button id="resend" disabled>إعادة الإرسال <span id="cnt">(60)</span></button></div>
+            <div class="resend">ماوصلكش؟ <button id="resend" disabled>إعادة الإرسال <span id="cnt">(60)</span></button> · <button id="ssReset" type="button">ابدأ من الأول</button></div>
             <!-- حادثة حية (٢٥ أغسطس): عميل ياهو الكود وصله delivered وقعد في
                  السبام — التنبيه يظهر بعد ٢٠ ثانية بدل ما يقلق اللي كوده بيوصل عادي -->
             <div class="spam-hint" id="spamHint">📥 مش لاقي الكود؟ بص في <b>الرسائل غير المرغوبة (Spam/Junk)</b> — أول رسالة من نظام جديد بتروح هناك أحيانًا</div>
@@ -569,6 +572,19 @@ const $ = id => document.getElementById(id);
 let lastPayload=null;
 let state = { request_id:null, subOK:false, plan:"{{ recommended or 'Horizon Pro' }}", demo:!HAS_BACKEND };
 
+/* استئناف الجلسة — بلاغ أحمد (٢٦ أغسطس): المتصفح قفل/ريلود وسط التسجيل
+   فضاع كل شيء. الحقول والخطوة وrequest_id بيتحفظوا مع كل تغيير، والريلود
+   بيرجّع لنفس المكان — حتى لو التجهيز شغال بيكمل عرض تقدمه عادي. */
+const SS_KEY = "hz_signup_v1";
+let curStep = 1;
+function saveSS(){
+  try{ localStorage.setItem(SS_KEY, JSON.stringify({
+    fn:$("fn").value, co:$("co").value, em:$("em").value, ph:$("ph").value,
+    sd:$("sd").value, plan:state.plan, request_id:state.request_id,
+    step:curStep, t:Date.now() })); }catch(_){}
+}
+function clearSS(){ try{ localStorage.removeItem(SS_KEY); }catch(_){} }
+
 async function api(url, data){
   try{
     const r = await fetch(url,{method:"POST",headers:{"Content-Type":"application/json","X-Frappe-CSRF-Token":CSRF_TOKEN||((window.frappe&&frappe.csrf_token)||"")},body:JSON.stringify(data||{})});
@@ -581,6 +597,7 @@ function toast(msg, err){const t=$("toast");t.textContent=msg;t.className="toast
 
 /* ---------- live URL mirror (signature) ---------- */
 const sd=$("sd"), urlSd=$("urlSd");
+["fn","co","em","ph","sd"].forEach(id=>$(id).addEventListener("input",()=>saveSS()));
 sd.addEventListener("input",()=>{
   sd.value = sd.value.toLowerCase().replace(/[^a-z0-9-]/g,"");
   urlSd.textContent = sd.value || "company";
@@ -627,6 +644,7 @@ document.querySelectorAll(".plan").forEach(p=>{
 
 /* ---------- step machinery ---------- */
 function goStep(n){
+  curStep = n; saveSS();
   [1,2,3].forEach(i=>{
     $("p"+i).classList.toggle("on", i===n);
     const st=$("st"+i);
@@ -859,6 +877,7 @@ function startProvision(){
   }
 }
 function finish(){
+  clearSS();
   const chip=$("chip");
   chip.classList.add("ok");
   chip.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg> الموقع جاهز';
@@ -883,6 +902,22 @@ if(matchMedia("(pointer:fine)").matches && !matchMedia("(prefers-reduced-motion:
   });
   document.querySelector(".visual").addEventListener("mouseleave",()=>{br.style.transform="";});
 }
+
+/* الاستئناف الفعلي عند فتح الصفحة — آخر السكربت عشان كل الدوال تكون معرفة */
+(function restoreSS(){
+  let s=null; try{ s=JSON.parse(localStorage.getItem(SS_KEY)||"null"); }catch(_){}
+  if(!s || Date.now()-(s.t||0) > 24*3600*1000) return;
+  ["fn","co","em","ph"].forEach(k=>{ if(s[k]) $(k).value=s[k]; });
+  if(s.sd){ sd.value=s.sd; sd.dispatchEvent(new Event("input")); }
+  if(s.plan) state.plan=s.plan;
+  if(s.request_id && s.step>=2){
+    state.request_id=s.request_id;
+    if(s.step>=3){ goStep(3); startProvision(); }
+    else goStep(2);
+    toast("رجّعناك مكان ما وقفت ✅");
+  }
+})();
+document.getElementById("ssReset").addEventListener("click",()=>{ clearSS(); location.reload(); });
 </script>
 </body>
 </html>

@@ -96,8 +96,28 @@ def request_signup(business_name: str, email: str, subdomain: str,
 
     if not frappe.db.exists("SaaS Plan", {"name": plan, "enabled": 1}):
         frappe.throw("Invalid plan.")
-    if frappe.db.exists("Tenant Site", {"subdomain": subdomain,
-                                        "status": ["!=", "Dropped"]}):
+    existing = frappe.db.get_value(
+        "Tenant Site", {"subdomain": subdomain, "status": ["!=", "Dropped"]},
+        ["name", "email", "status", "site_name"], as_dict=True)
+    if existing:
+        # بلاغ أحمد (٢٦ أغسطس): المتصفح قفل وسط التسجيل فرجع يلاقي
+        # «الدومين محجوز» وهو مش عارف إن موقعه اتجهز فعلًا — الرسالة
+        # لازم تفرّق بين صاحب الدومين نفسه وبين شخص تاني
+        if (existing.email or "").lower() == email.lower():
+            if existing.status == "Active":
+                frappe.throw(
+                    f"الدومين ده مسجل بإيميلك بالفعل ✅ نظامك جاهز على https://{existing.site_name} "
+                    "وبيانات دخولك اتبعتت على بريدك — لو مش لاقيها بص في الرسائل غير المرغوبة (Spam).")
+            if existing.status in ("Pending", "Provisioning"):
+                frappe.throw(
+                    "نفس الدومين قيد التجهيز بإيميلك دلوقتي — مش محتاج تسجل تاني، "
+                    "بيانات الدخول هتوصلك على بريدك خلال دقائق.")
+            notify_owner_telegram(
+                f"⚠️ عميل حاول يعيد التسجيل على دومين متعثر\n{subdomain} — {email}\n"
+                f"حالة المحاولة السابقة: {existing.status} — يحتاج تدخل يدوي.")
+            frappe.throw(
+                "فيه محاولة سابقة متعثرة على الدومين ده بإيميلك — فريق Horizon اتبلغ فورًا "
+                "وهيتواصل معاك يظبطها، أو جرب اسم دومين تاني دلوقتي.")
         frappe.throw("Subdomain already taken.")
 
     otp = f"{secrets.randbelow(1000000):06d}"
