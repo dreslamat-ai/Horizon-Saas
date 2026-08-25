@@ -32,6 +32,8 @@ import string
 import subprocess
 
 import frappe
+
+from saas_manager import emails
 from frappe.utils import now_datetime, add_days, nowdate
 
 SUBDOMAIN_RE = re.compile(r"^[a-z][a-z0-9-]{2,30}$")
@@ -370,35 +372,17 @@ def provision_site(tenant: str):
         run_bench(["--site", site, "set-config", "saas_subscription_ends_on",
                    str(trial_end)], tenant_name=tenant)
 
-        _send_welcome_email(doc, owner_pwd)
+        emails.send_welcome(doc, owner_pwd, trial_days=int(plan.trial_days or 14))
         _log(tenant, "Provisioning completed successfully.")
 
     except Exception:
         doc.db_set("status", "Failed")
         frappe.db.commit()
         frappe.log_error(frappe.get_traceback(), f"Provisioning failed: {site}")
+        try:
+            emails.send_provisioning_failed(doc)
+        except Exception:
+            pass
         raise
 
 
-def _send_welcome_email(doc, owner_pwd: str):
-    url = f"https://{doc.site_name}"
-    frappe.sendmail(
-        recipients=[doc.email],
-        subject="نظامك جاهز ✅ | Horizon ERP",
-        message=f"""
-        <div dir="rtl" style="font-family:Cairo,Arial,sans-serif;color:#221f1f">
-          <h2 style="color:#1D2D44">أهلاً {frappe.utils.escape_html(doc.customer_name or '')} 👋</h2>
-          <p>أنا <b>الاء</b>، وكيلك الذكي في هورايزون — خلّصت تجهيز نظامك وهو جاهز على الرابط التالي:</p>
-          <p><a href="{url}" style="color:#1D2D44;font-weight:bold">{url}</a></p>
-          <p>بيانات الدخول:</p>
-          <ul>
-            <li>البريد: {doc.email}</li>
-            <li>كلمة المرور المؤقتة: <b>{owner_pwd}</b></li>
-          </ul>
-          <p>من فضلك غيّر كلمة المرور بعد أول تسجيل دخول.</p>
-          <p>الفترة التجريبية تنتهي في: <b>{doc.trial_ends_on}</b></p>
-          <p style="color:#5083BC;font-weight:bold">— الاء | Horizon Smart Systems</p>
-        </div>
-        """,
-        delayed=False,
-    )

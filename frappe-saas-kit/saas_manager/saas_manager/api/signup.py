@@ -16,6 +16,8 @@ import secrets
 import urllib.request
 
 import frappe
+
+from saas_manager import emails
 from frappe.utils import now_datetime, add_to_date, get_datetime, validate_email_address
 
 from saas_manager.provisioning import provisioner
@@ -109,18 +111,7 @@ def request_signup(business_name: str, email: str, subdomain: str,
     }).insert(ignore_permissions=True)
     frappe.db.commit()
 
-    frappe.sendmail(
-        recipients=[email],
-        subject=f"Horizon — رمز التحقق: {otp}",
-        message=f"""
-        <div dir="rtl" style="font-family:Cairo,Arial;text-align:center">
-          <h2 style="color:#1D2D44">Horizon AI Powered ERP</h2>
-          <p style="color:#4A5361">رمز التحقق الخاص بك</p>
-          <p style="font-size:32px;letter-spacing:8px;font-weight:bold;color:#1D2D44">{otp}</p>
-          <p>صالح لمدة {OTP_TTL_MINUTES} دقيقة.</p>
-        </div>""",
-        delayed=False,
-    )
+    emails.send_otp(email, otp, minutes=OTP_TTL_MINUTES)
     return {"request_id": req.name}
 
 

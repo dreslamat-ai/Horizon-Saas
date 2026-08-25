@@ -1,0 +1,44 @@
+{
+ "doctype": "DocType",
+ "name": "SaaS Lead",
+ "module": "Saas Manager",
+ "custom": 0,
+ "naming_rule": "Expression",
+ "autoname": "format:LEAD-{YYYY}-{#####}",
+ "engine": "InnoDB",
+ "field_order": ["contact_name", "company", "email", "column_break_1", "phone", "source", "status",
+                 "section_calc", "calc_mode", "estimate", "currency", "inputs_json",
+                 "section_meta", "report_sent_on", "notes"],
+ "fields": [
+  {"fieldname": "contact_name", "fieldtype": "Data", "label": "Contact Name", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "company", "fieldtype": "Data", "label": "Company", "in_list_view": 1},
+  {"fieldname": "email", "fieldtype": "Data", "label": "Email", "options": "Email", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "column_break_1", "fieldtype": "Column Break"},
+  {"fieldname": "phone", "fieldtype": "Data", "label": "Phone"},
+  {"fieldname": "source", "fieldtype": "Select", "label": "Source",
+   "options": "Cost Calculator\nWebsite\nDemo Request\nOther", "default": "Cost Calculator", "in_standard_filter": 1},
+  {"fieldname": "status", "fieldtype": "Select", "label": "Status",
+   "options": "New\nContacted\nQualified\nConverted\nDropped", "default": "New",
+   "in_list_view": 1, "in_standard_filter": 1},
+
+  {"fieldname": "section_calc", "fieldtype": "Section Break", "label": "Calculator Result"},
+  {"fieldname": "calc_mode", "fieldtype": "Select", "label": "Segment",
+   "options": "\nManufacturing\nContracting", "in_standard_filter": 1,
+   "description": "Which version of the calculator the visitor used"},
+  {"fieldname": "estimate", "fieldtype": "Currency", "label": "Self-Estimated Annual Leakage",
+   "options": "currency", "in_list_view": 1,
+   "description": "The number the prospect arrived at themselves — the strongest opener a sales call can have"},
+  {"fieldname": "currency", "fieldtype": "Link", "label": "Currency", "options": "Currency", "default": "SAR"},
+  {"fieldname": "inputs_json", "fieldtype": "Small Text", "label": "Calculator Inputs", "read_only": 1},
+
+  {"fieldname": "section_meta", "fieldtype": "Section Break", "label": "Follow-up"},
+  {"fieldname": "report_sent_on", "fieldtype": "Datetime", "label": "Report Sent On", "read_only": 1},
+  {"fieldname": "notes", "fieldtype": "Small Text", "label": "Notes"}
+ ],
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "export": 1}
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

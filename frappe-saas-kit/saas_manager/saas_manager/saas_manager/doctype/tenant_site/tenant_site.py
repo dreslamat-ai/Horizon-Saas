@@ -45,6 +45,7 @@ class TenantSite(Document):
         """Upgrade/downgrade: install missing apps + rewrite limits & features."""
         frappe.only_for("System Manager")
         from saas_manager.provisioning.provisioner import run_bench, apply_plan_config
+        old_plan = self.plan
         plan = frappe.get_doc("SaaS Plan", new_plan)
         installed = run_bench(["--site", self.site_name, "list-apps"], self.name)
         for app in plan.apps_list() + ["horizon_client"]:
@@ -54,6 +55,15 @@ class TenantSite(Document):
         apply_plan_config(self.site_name, plan, tenant_name=self.name)
         self.db_set("plan", new_plan)
         frappe.db.commit()
+        try:
+            from saas_manager import emails
+            emails.send_plan_changed(self, old_plan, new_plan, limits={
+                "المستخدمون": plan.max_users or "بلا حد",
+                "الفروع": plan.get("max_branches") or 1,
+                "الشركات": plan.get("max_companies") or 1,
+            })
+        except Exception:
+            frappe.log_error(frappe.get_traceback(), f"Plan email failed: {self.name}")
         frappe.msgprint(f"Plan changed to {new_plan}. Limits and features applied.")
 
     @frappe.whitelist()

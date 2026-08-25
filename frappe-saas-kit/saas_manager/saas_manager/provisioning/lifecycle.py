@@ -5,6 +5,8 @@ All bench calls go through provisioner.run_bench (safe arg lists).
 """
 
 import frappe
+
+from saas_manager import emails
 from frappe.utils import add_months, add_days, nowdate, now_datetime, date_diff
 
 from saas_manager.provisioning.provisioner import run_bench, _log
@@ -43,8 +45,14 @@ def suspend(tenant: str, reason: str = ""):
     doc.db_set("suspended_on", nowdate())
     frappe.db.commit()
     _log(tenant, f"Suspended. {reason}")
-    _notify(doc, "تم إيقاف اشتراكك مؤقتًا",
-            "تم إيقاف النظام لانتهاء الاشتراك. للتفعيل قم بتحويل قيمة الباقة وسيتم إعادة التشغيل فورًا.")
+    pay_url = ""
+    try:
+        from saas_manager.payments import myfatoorah
+        if myfatoorah.is_configured():
+            pay_url = myfatoorah.create_renewal_invoice(tenant, months=1).payment_url
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), f"MF link failed on suspend: {tenant}")
+    emails.send_suspended(doc, pay_url=pay_url)
 
 
 def resume(tenant: str):
@@ -56,7 +64,7 @@ def resume(tenant: str):
     doc.db_set("suspended_on", None)
     frappe.db.commit()
     _log(tenant, "Resumed.")
-    _notify(doc, "تم إعادة تفعيل حسابك ✅", "رجعنا شغالين! نظامك متاح الآن بشكل كامل.")
+    emails.send_resumed(doc)
 
 
 # ------------------------------------------------------------------ #
@@ -100,22 +108,17 @@ def send_expiry_notices():
         )
         for r in rows:
             doc = frappe.get_doc("Tenant Site", r.name)
-            body = (f"باقتك ({r.plan}) تنتهي يوم {r.subscription_ends_on}. "
-                    "جدّد بالتحويل البنكي وسيتم التفعيل فور التأكيد.")
+            pay_url, amount = "", ""
             try:
                 from saas_manager.payments import myfatoorah
                 if myfatoorah.is_configured():
                     inv = myfatoorah.create_renewal_invoice(r.name, months=1)
-                    body = (f"باقتك ({r.plan}) تنتهي يوم {r.subscription_ends_on}.<br>"
-                            f'<a href="{inv.payment_url}" style="display:inline-block;'
-                            f'background:#1D2D44;color:#fff;padding:10px 22px;'
-                            f'border-radius:10px;text-decoration:none;font-weight:bold">'
-                            f"جدّد الآن — {inv.amount} {inv.currency}</a><br>"
-                            "الدفع آمن عبر MyFatoorah والتفعيل فوري وتلقائي. "
-                            "التحويل البنكي متاح أيضًا كخيار بديل.")
+                    pay_url = inv.payment_url
+                    amount = f"{inv.amount} {inv.currency}"
             except Exception:
                 frappe.log_error(frappe.get_traceback(), f"MF link failed: {r.name}")
-            _notify(doc, f"اشتراكك ينتهي خلال {days} يوم", body)
+            emails.send_expiry_notice(doc, days, r.plan, r.subscription_ends_on,
+                                      pay_url=pay_url, amount=amount)
 
 
 def backup_all_active_sites():
@@ -154,15 +157,3 @@ def drop_site(tenant: str, db_root_password: str | None = None):
 
 # ------------------------------------------------------------------ #
 
-def _notify(doc, subject: str, body: str):
-    try:
-        frappe.sendmail(
-            recipients=[doc.email],
-            subject=subject,
-            message=(
-                f'<div dir="rtl" style="font-family:Cairo,Arial;color:#221f1f">{body}'
-                f'<p style="color:#5083BC;font-weight:bold">— الاء | Horizon Smart Systems</p></div>'
-            ),
-        )
-    except Exception:
-        frappe.log_error(frappe.get_traceback(), f"Notify failed: {doc.name}")

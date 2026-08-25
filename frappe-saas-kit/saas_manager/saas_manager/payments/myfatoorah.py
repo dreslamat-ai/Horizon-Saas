@@ -133,6 +133,13 @@ def _settle(inv) -> str:
     frappe.db.commit()
     lifecycle.activate(inv.tenant_site, months=inv.months)
     frappe.db.commit()
+    try:
+        from saas_manager import emails
+        t = frappe.get_doc("Tenant Site", inv.tenant_site)
+        emails.send_payment_confirmed(t, inv.name, f"{inv.amount} {inv.currency}",
+                                      t.subscription_ends_on)
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), f"Payment email failed: {inv.name}")
     return "activated"
 
 
