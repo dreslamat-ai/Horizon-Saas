@@ -298,6 +298,11 @@ h1 .u::after{content:"";position:absolute;right:0;bottom:4px;height:10px;width:1
 /* الأوامر التقنية مخفية عن المستخدم — طلب المالك (العناصر باقية لأن الكود بيحدثها) */
 .tl .cmd{display:none!important}
 /* شريط تقدم لكل خطوة — طلب المالك: بيزحف أثناء التنفيذ ويكتمل أخضر */
+/* عدّاد الوقت المتبقي بساعة رملية بتتقلب — التقدير من متوسط التجهيزات الفعلية */
+.wt-count{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:900;color:var(--navy);
+  font-variant-numeric:tabular-nums;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+.wt-count .hg{display:inline-block;font-size:16px;animation:hgflip 2.4s ease-in-out infinite}
+@keyframes hgflip{0%,55%{transform:rotate(0)}70%,100%{transform:rotate(180deg)}}
 /* بطاقات الانتظار: قيمة التوفير + تسلية — بتتبدل كل ٧ ثواني */
 .wait-tips{margin-top:14px;background:var(--paper);border:1px solid var(--line);border-radius:14px;
   padding:14px 16px;min-height:66px;display:flex;flex-direction:column;justify-content:center;gap:8px}
@@ -484,6 +489,7 @@ input:focus-visible,button:focus-visible,.plan:focus-within{outline:2px solid va
           </div>
 
           <div class="wait-tips" id="waitTips">
+            <div class="wt-count" id="wtCount"><span class="hg">⏳</span> <span id="wtRemain">بنحسب الوقت المتبقي…</span></div>
             <div class="wt-line" id="wtLine">⏱ تركيب نظام ERP تقليدي بياخد أسابيع وفريق كامل — إحنا بنخلّصه قدامك في دقايق</div>
             <div class="wt-dots" id="wtDots"></div>
           </div>
@@ -748,6 +754,32 @@ const WAIT_TIPS=[
   "🎁 تجربتك ١٤ يوم بكل المميزات — وألاء معاها ٢٠٠ رسالة هدية",
 ];
 let wtIdx=0, wtTimer=null;
+
+/* العدّاد: التقدير من السيرفر (متوسط آخر ٥ تجهيزات فعلية)، بيتزامن مع كل
+   قياس وبيعدّ محليًا كل ثانية. لو الواقع طوّل عن التقدير مايوصلش صفر
+   يكدب — بيتحول لـ"لحظات أخيرة" من غير أرقام. */
+let cdRemain=null, cdTimer=null;
+function syncCountdown(estimate, elapsed){
+  if(typeof estimate!=="number"||typeof elapsed!=="number") return;
+  cdRemain=Math.max(0, estimate-elapsed);
+  if(!cdTimer){
+    cdTimer=setInterval(()=>{
+      if(cdRemain===null) return;
+      cdRemain=Math.max(0, cdRemain-1);
+      renderCountdown();
+    },1000);
+  }
+  renderCountdown();
+}
+function renderCountdown(){
+  const el=$("wtRemain");
+  if(!el) return;
+  if(cdRemain===null){ el.textContent="بنحسب الوقت المتبقي…"; return; }
+  if(cdRemain<=8){ el.textContent="لحظات أخيرة — بنلمّع الشاشات ✨"; return; }
+  const m=Math.floor(cdRemain/60), s=cdRemain%60;
+  el.textContent=`الوقت المتبقي تقريبًا ${m}:${String(s).padStart(2,"0")} دقيقة`;
+}
+function stopCountdown(){ if(cdTimer){clearInterval(cdTimer);cdTimer=null;} }
 function startWaitTips(){
   const dots=$("wtDots");
   dots.innerHTML=WAIT_TIPS.map((_,i)=>`<i${i===0?' class="on"':''}></i>`).join("");
@@ -793,6 +825,7 @@ function startProvision(){
                ["apps","live",3700],["apps","done",6400],["config","live",6500],["config","done",7900],
                ["user","live",8000],["user","done",9000],["alaa","live",9100],["alaa","done",10300]];
     seq.forEach(([k,st,t])=>setTimeout(()=>mark(k,st),t));
+    syncCountdown(11, 0);
     setTimeout(finish, 10800);
   } else {
     // التقدم من الخطوة الحقيقية اللي السيرفر بيقرأها من لوج التجهيز —
@@ -805,11 +838,12 @@ function startProvision(){
         if(!s) return;
         const st=(s.status||"").toLowerCase();
         if(st.includes("active")||st.includes("ready")){ clearInterval(poll); clearInterval(wtTimer); ORDER.forEach(k=>mark(k,"done")); finish(); return; }
-        if(st.includes("fail")){ clearInterval(poll); clearInterval(wtTimer); toast("حصل خطأ أثناء البناء — الاء هتتواصل معاك على بريدك", true); return; }
+        if(st.includes("fail")){ clearInterval(poll); clearInterval(wtTimer); stopCountdown(); toast("حصل خطأ أثناء البناء — الاء هتتواصل معاك على بريدك", true); return; }
         const idx=ORDER.indexOf(s.step||"queue");
         if(idx>maxIdx) maxIdx=idx;
         mark(ORDER[maxIdx],"live");
-        $("chipT").textContent=s.detail ? "بنركّب: "+s.detail : "الاء بتجهّز موقعك… (عادةً ٢-٤ دقايق)";
+        syncCountdown(s.estimate, s.elapsed);
+        $("chipT").textContent=s.detail ? "بنركّب: "+s.detail : "الاء بتجهّز موقعك…";
       }catch(_){}
     }, 3500);
   }
@@ -821,6 +855,7 @@ function finish(){
   $("tl").style.display="none";
   $("waitTips").style.display="none";
   if(wtTimer) clearInterval(wtTimer);
+  stopCountdown();
   const url=`https://${sd.value}.${ROOT_DOMAIN}`;
   $("doneUrl").textContent=url.replace("https://","");
   $("doneBox").classList.add("show");

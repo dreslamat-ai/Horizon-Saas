@@ -225,6 +225,20 @@ def _current_step(log: str) -> tuple[str, str]:
     return "site", ""
 
 
+def _avg_provision_seconds() -> int:
+    """متوسط زمن آخر ٥ تجهيزات ناجحة — تقدير العدّاد يتحدث لوحده مع كل
+    تجهيز بدل رقم ثابت يكدب أول ما السيرفر يتقل أو يخف."""
+    row = frappe.db.sql(
+        """SELECT AVG(s) FROM (
+             SELECT TIMESTAMPDIFF(SECOND, creation, provisioned_on) AS s
+             FROM `tabTenant Site`
+             WHERE provisioned_on IS NOT NULL AND provisioned_on > creation
+             ORDER BY provisioned_on DESC LIMIT 5) x""")
+    avg = int(row[0][0] or 0) if row else 0
+    # حدا أمان: تقدير خارج النطاق المعقول (سجل معطوب/موقع مستورد) يرجع للافتراضي
+    return avg if 90 <= avg <= 900 else 240
+
+
 @frappe.whitelist(allow_guest=True)
 def provisioning_status(request_id: str):
     """Polled by the signup page to show live progress."""
@@ -233,10 +247,13 @@ def provisioning_status(request_id: str):
     if not req or not req.tenant_site:
         return {"status": "pending"}
     t = frappe.db.get_value("Tenant Site", req.tenant_site,
-                            ["status", "site_name", "provisioning_log"], as_dict=True)
+                            ["status", "site_name", "provisioning_log", "creation"], as_dict=True)
     out = {"status": (t.status or "").lower(), "url": f"https://{t.site_name}"}
     if out["status"] == "provisioning":
         out["step"], out["detail"] = _current_step(t.provisioning_log)
+        from frappe.utils import now_datetime, get_datetime
+        out["elapsed"] = max(0, int((now_datetime() - get_datetime(t.creation)).total_seconds()))
+        out["estimate"] = _avg_provision_seconds()
     return out
 
 
