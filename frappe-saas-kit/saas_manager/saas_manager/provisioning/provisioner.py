@@ -161,12 +161,24 @@ def apply_branding(site: str, tenant_name: str | None = None):
         src = os.path.join(src_dir, fname)
         if os.path.exists(src) and os.path.isdir(dest_dir):
             shutil.copy(src, os.path.join(dest_dir, fname))
+    # معاينة الروابط لكل موقع مستأجر — نفس كارت هورايزون (ألاء) المركزي.
+    # الصورة من الدومين الرئيسي عمدًا: نسخة واحدة تتحدث فتتحدث للجميع.
+    og_head = (
+        "\n<meta property=\"og:type\" content=\"website\">"
+        "\n<meta property=\"og:title\" content=\"Horizon AI Powered ERP — نظام ERP بذكاء اصطناعي يتكلّم عربي\">"
+        "\n<meta property=\"og:description\" content=\"محاسبة ومخازن وتصنيع وفوترة زاتكا، ومعاك ألاء — وكيلك الذكي جوّه النظام.\">"
+        "\n<meta property=\"og:image\" content=\"https://horizonerp.cloud/files/horizon-og-v4.png\">"
+        "\n<meta property=\"og:image:width\" content=\"1200\">"
+        "\n<meta property=\"og:image:height\" content=\"630\">"
+        "\n<meta name=\"twitter:card\" content=\"summary_large_image\">"
+    )
     values = {
         "app_name": "Horizon ERP",
         "app_logo": "/files/horizon-logo1.png",
         "banner_image": "/files/horizon-logo1.png",
         "splash_image": "/files/horizon-logo1.png",
         "favicon": "/files/horizon-icon.png",
+        "head_html": og_head,
     }
     run_bench(
         ["--site", site, "execute", "frappe.db.set_value",
