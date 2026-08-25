@@ -861,16 +861,16 @@ footer{background:var(--navy-950);color:var(--on-dark-3);padding:48px 0 26px;
     </div>
     <div class="plans">
       {% set feats = {
-        0: ["محاسبة · مخازن · مبيعات · موارد بشرية", "نسخ احتياطي يومي"],
-        1: ["وحدة التصنيع (BOM · أوامر تشغيل · MRP)", "وحدة المقاولات (مستخلصات · محتجزات)", "الفوترة الإلكترونية", "دعم بأولوية"],
-        2: ["واجهة برمجية كاملة (API)", "تكاملات مخصصة", "مدير حساب مخصص", "تدريب وإعداد أولي"]
+        0: ["مخازن · مبيعات · مشتريات", "شركة واحدة · فرع واحد", "نسخ احتياطي يومي"],
+        1: ["كل الأساسية + الحسابات الكاملة", "تعدد الفروع", "الفوترة الإلكترونية"],
+        2: ["كل الاحترافية + الموارد البشرية", "التصنيع (BOM · أوامر تشغيل)", "إدارة المشاريع", "دعم بأولوية"]
       } %}
       {% for p in plans %}
       {% set i = loop.index0 %}
       <div class="plan {% if i == 1 %}hot{% endif %} rv d{{ i + 1 }}">
         <div class="glare"></div>
         {% if i == 1 %}<div class="ribbon">الأكثر اختيارًا</div>{% endif %}
-        <h3>{{ p.plan_name or p.name }}</h3>
+        <h3>{{ plan_ar.get(p.name, p.plan_name or p.name) }}</h3>
         <div class="ds">{{ plan_desc[i] if plan_desc and plan_desc|length > i else "" }}</div>
         <div class="price"><b class="num" data-m="{{ "{:,}".format(p.monthly_price|int) }}"
              data-y="{{ "{:,}".format((p.monthly_price|int) * 10) }}">{{ "{:,}".format(p.monthly_price|int) }}</b><span>{{ p.currency }}</span></div>
@@ -882,9 +882,17 @@ footer{background:var(--navy-950);color:var(--on-dark-3);padding:48px 0 26px;
           {% endfor %}
         </ul>
         <a class="btn {% if i == 1 %}btn-w{% else %}btn-g{% endif %}"
-           href="{% if i == 2 %}#demo{% else %}/signup{% endif %}">{% if i == 2 %}تواصل معنا{% else %}ابدأ مجانًا{% endif %}</a>
+           href="/signup">ابدأ مجانًا</a>
       </div>
       {% endfor %}
+    </div>
+    <!-- إنتربرايز بلا سعر معلن — بقرار المالك: حسب دراسة بيزنس العميل -->
+    <div class="plan rv" style="margin-top:18px;display:flex;flex-wrap:wrap;align-items:center;gap:18px;justify-content:space-between">
+      <div style="flex:1;min-width:260px">
+        <h3>إنتربرايز</h3>
+        <div class="ds" style="min-height:auto">بدون سعر ثابت — بندرس بيزنس شركتك (الفروع، الشركات، المستخدمين، التكاملات) ونبني لك عرضًا على مقاسك: مستخدمون وشركات بلا حد، تكاملات مخصصة، مدير حساب، وتدريب كامل.</div>
+      </div>
+      <a class="btn btn-g" href="#demo" style="flex:none">تواصل معنا</a>
     </div>
   </div>
 </section>

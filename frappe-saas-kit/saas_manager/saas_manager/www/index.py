@@ -21,9 +21,16 @@ def get_context(context):
     ]
     # positional taglines: the plan DocType has no marketing copy field, and
     # adding one would put website wording in an operational record.
+    # هيكل الباقات بقرار المالك (٢٥ أغسطس): الأولى تشغيل يومي بلا حسابات،
+    # الثانية +الحسابات، الثالثة +الموديولات المتقدمة — وإنتربرايز بلا سعر
+    context.plan_ar = {
+        "Horizon Basic": "أساسية",
+        "Horizon Pro": "احترافية",
+        "Horizon Enterprise": "أعمال",
+    }
     context.plan_desc = [
-        "للورش والشركات الصغيرة اللي بتبدأ تنظّم شغلها",
-        "للمصانع وشركات المقاولات المتوسطة",
-        "بلا حدود — لمجموعات الشركات ومتعددة المصانع والمشاريع",
+        "للمحلات والمستودعات — إدارة التشغيل اليومي",
+        "للشركات اللي محتاجة حسابات كاملة وفروع متعددة",
+        "للمصانع وشركات المشاريع — الموديولات المتقدمة كاملة",
     ]
     return context

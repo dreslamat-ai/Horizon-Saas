@@ -77,6 +77,39 @@ def _check_count(doctype, key, doc, msg, title):
 # feature gates
 # ------------------------------------------------------------------ #
 
+# خاصية الباقة ⟵ موديولات فرابي اللي بتتقفل لما قيمتها 0.
+# قرار المالك (٢٥ أغسطس): الحسابات من الاحترافية، وHR/التصنيع/المشاريع
+# مع باقة أعمال فقط — الأولى تشغيل يومي (مخازن/مبيعات/مشتريات).
+GATED_MODULES = {
+    "accounting": ["Accounts"],
+    "hr": ["HR", "Payroll"],
+    "manufacturing": ["Manufacturing"],
+    "projects": ["Projects"],
+}
+
+
+def sync_module_blocks(doc, method=None):
+    """بوابة الموديولات حسب الباقة — block_modules الأصيلة في فرابي.
+
+    بتتطبق مع كل حفظ لمستخدم (الإنشاء والتعديل): المفتاح الموجود في
+    saas_features بقيمة 0 يقفل موديولاته، والمفتاح الغايب (مواقع قديمة
+    قبل هيكل الباقات، أو غير مُدارة) = لا قفل — لا نكسر موقعًا قائمًا.
+    وإعادة التطبيق في كل validate بتمنع مدير النظام عند العميل من شيل
+    القفل يدويًا من شاشة المستخدم — بيرجع مع أول حفظ.
+    """
+    feats = frappe.conf.get("saas_features") or {}
+    if not feats or doc.name in ("Administrator", "Guest"):
+        return
+    blocked = []
+    for key, modules in GATED_MODULES.items():
+        if key in feats and not cint(feats.get(key)):
+            blocked += [m for m in modules if frappe.db.exists("Module Def", m)]
+    existing = {d.module for d in (doc.get("block_modules") or [])}
+    for m in blocked:
+        if m not in existing:
+            doc.append("block_modules", {"module": m})
+
+
 def enforce_currency(doc, method=None):
     """عملة الموقع مثبتة من بلد الاشتراك (saas_currency في site_config).
 

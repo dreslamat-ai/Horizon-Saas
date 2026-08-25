@@ -7,7 +7,8 @@ app_license = "MIT"
 
 # limits are enforced server-side on validate — cannot be bypassed from UI or API
 doc_events = {
-    "User": {"validate": "horizon_client.limits.check_user_limit"},
+    "User": {"validate": ["horizon_client.limits.check_user_limit",
+                          "horizon_client.limits.sync_module_blocks"]},
     "Company": {"validate": ["horizon_client.limits.check_company_limit",
                              "horizon_client.limits.enforce_currency"]},
     "Branch": {"validate": "horizon_client.limits.check_branch_limit"},
