@@ -434,7 +434,7 @@ html[dir="ltr"] .sw.on::after{transform:translateX(23px)}
 .plan:hover .glare{opacity:1}
 .plan.hot{background:var(--navy);border-color:var(--navy-500);color:var(--on-dark)}
 .plan.hot .glare{background:radial-gradient(540px circle at var(--gx,50%) var(--gy,50%),var(--steel-soft),transparent 45%)}
-.plan .ribbon{position:absolute;top:16px;inset-inline-start:16px;background:var(--steel);color:var(--navy-950);
+.plan .ribbon{position:absolute;top:14px;left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--steel);color:var(--navy-950);
   font-size:.68rem;font-weight:900;padding:5px 13px;border-radius:99px}
 .plan h3{font-size:1.2rem;color:var(--navy);transform:translateZ(26px);font-weight:900}
 .plan.hot h3{color:#fff}
@@ -886,7 +886,7 @@ footer{background:var(--navy-950);color:var(--on-dark-3);padding:48px 0 26px;
         <div class="per per-t">شهريًا · لكل شركة</div>
         <ul>
           <li>{% if p.max_users %}{{ p.max_users }} مستخدم{% else %}مستخدمون بلا حد · وحدات بلا حد{% endif %}</li>
-          <li>{% if p.max_branches and p.max_branches > 1 %}{{ p.max_branches }} فروع{% elif p.max_branches %}فرع واحد{% else %}فروع وشركات بلا حد{% endif %}{% if p.max_companies %} · {{ p.max_companies }} شركة{% endif %}</li>
+          <li>{% if p.max_branches and p.max_branches > 1 %}{{ p.max_branches }} فروع{% elif p.max_branches %}فرع واحد{% else %}فروع متعددة{% endif %} · {% if p.max_companies and p.max_companies > 1 %}{{ p.max_companies }} شركات{% elif p.max_companies %}شركة واحدة{% else %}شركات بلا حد{% endif %}</li>
           {% for f in feats.get(i, []) %}<li>{{ f }}</li>
           {% endfor %}
         </ul>
