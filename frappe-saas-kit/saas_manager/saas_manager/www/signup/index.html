@@ -298,6 +298,14 @@ h1 .u::after{content:"";position:absolute;right:0;bottom:4px;height:10px;width:1
 /* الأوامر التقنية مخفية عن المستخدم — طلب المالك (العناصر باقية لأن الكود بيحدثها) */
 .tl .cmd{display:none!important}
 /* شريط تقدم لكل خطوة — طلب المالك: بيزحف أثناء التنفيذ ويكتمل أخضر */
+/* بطاقات الانتظار: قيمة التوفير + تسلية — بتتبدل كل ٧ ثواني */
+.wait-tips{margin-top:14px;background:var(--paper);border:1px solid var(--line);border-radius:14px;
+  padding:14px 16px;min-height:66px;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.wt-line{font-size:13px;font-weight:700;color:var(--navy-900);line-height:1.8;transition:opacity .45s}
+.wt-line.fade{opacity:0}
+.wt-dots{display:flex;gap:5px}
+.wt-dots i{width:6px;height:6px;border-radius:50%;background:#CBD4E0;transition:.3s}
+.wt-dots i.on{background:var(--navy);width:16px;border-radius:99px}
 .tl .pbar{height:4px;background:#E9EDF3;border-radius:99px;margin-top:8px;overflow:hidden;opacity:0;transition:opacity .3s}
 .tl .row.live .pbar,.tl .row.done .pbar{opacity:1}
 .tl .pbar i{display:block;height:100%;width:0;border-radius:99px;background:#5083BC}
@@ -461,14 +469,23 @@ input:focus-visible,button:focus-visible,.plan:focus-within{outline:2px solid va
               <div><div class="tt">تركيب Horizon AI Powered ERP</div><div class="ds">كل الوحدات + حدود باقتك وخصائصها</div>
               <span class="cmd">horizon install --modules all --plan pro</span></div>
             </div>
-            <div class="row" data-k="ssl">
-              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="10" width="16" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
-              <div><div class="tt">تأمين الاتصال</div><div class="ds">شهادة SSL وتفعيل الدومين</div></div>
+            <div class="row" data-k="config">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+              <div><div class="tt">الهوية والإعدادات السعودية</div><div class="ds">حدود باقتك + هوية Horizon + تجهيز عربي بالريال</div></div>
             </div>
             <div class="row" data-k="user">
               <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg></span>
-              <div><div class="tt">إنشاء حسابك كمدير</div><div class="ds">صلاحيات كاملة + بيانات الدخول على بريدك</div></div>
+              <div><div class="tt">إنشاء حسابك وشركتك</div><div class="ds">صلاحيات كاملة + دليل حسابات مرقّم جاهز + بيانات الدخول على بريدك</div></div>
             </div>
+            <div class="row" data-k="alaa">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="7" width="16" height="12" rx="3"/><circle cx="9" cy="13" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1.4" fill="currentColor" stroke="none"/><path d="M12 7V4M8 4h8"/></svg></span>
+              <div><div class="tt">توظيف ألاء عندك 🤖</div><div class="ds">مساعدتك الذكية — اسألها بالعربي وهتجاوبك من بياناتك، ومعاها ٢٠٠ رسالة هدية</div></div>
+            </div>
+          </div>
+
+          <div class="wait-tips" id="waitTips">
+            <div class="wt-line" id="wtLine">⏱ تركيب نظام ERP تقليدي بياخد أسابيع وفريق كامل — إحنا بنخلّصه قدامك في دقايق</div>
+            <div class="wt-dots" id="wtDots"></div>
           </div>
 
           <div class="done-box" id="doneBox">
@@ -717,7 +734,34 @@ $("cta2").addEventListener("click", async ()=>{
 });
 
 /* ---------- provisioning: timeline + browser build ---------- */
-const ORDER=["queue","site","apps","ssl","user"];
+const ORDER=["queue","site","apps","config","user","alaa"];
+
+/* بطاقات القيمة والتسلية أثناء الانتظار — بلاغ المالك: الانتظار كان صامتًا
+   مملًا والعميل ممكن يهرب. كل بطاقة سطر واحد: توفير ملموس أو ميزة بتتجهز */
+const WAIT_TIPS=[
+  "⏱ تركيب نظام ERP تقليدي بياخد أسابيع وفريق كامل — إحنا بنخلّصه قدامك في دقايق",
+  "💸 اللي بيتجهز دلوقتي كان بيحتاج: سيرفر خاص + مهندس صيانة + تراخيص سنوية — كله جوّه اشتراكك",
+  "🧾 فواتيرك هتطلع متوافقة مع هيئة الزكاة والضريبة (QR زاتكا) من أول فاتورة",
+  "🤖 ألاء بتتوظف عندك حالًا — اسألها بالعربي «ورّيني مبيعات الشهر» وهتجاوبك من بياناتك فعلًا",
+  "📊 دليل حسابات سعودي مرقّم بـ٩٥ حساب جاهز — مش هتبدأ من ورقة بيضا",
+  "📱 النظام كله شغال من موبايلك: الفواتير والمخزون والموافقات وانت ماشي",
+  "🎁 تجربتك ١٤ يوم بكل المميزات — وألاء معاها ٢٠٠ رسالة هدية",
+];
+let wtIdx=0, wtTimer=null;
+function startWaitTips(){
+  const dots=$("wtDots");
+  dots.innerHTML=WAIT_TIPS.map((_,i)=>`<i${i===0?' class="on"':''}></i>`).join("");
+  wtTimer=setInterval(()=>{
+    wtIdx=(wtIdx+1)%WAIT_TIPS.length;
+    const line=$("wtLine");
+    line.classList.add("fade");
+    setTimeout(()=>{
+      line.textContent=WAIT_TIPS[wtIdx];
+      line.classList.remove("fade");
+      [...dots.children].forEach((d,i)=>d.classList.toggle("on",i===wtIdx));
+    },450);
+  },7000);
+}
 // شريط تقدم جوه كل صف — يتحقن مرة واحدة
 document.querySelectorAll("#tl .row > div:last-child").forEach(d=>{
   const p=document.createElement("div"); p.className="pbar"; p.innerHTML="<i></i>"; d.appendChild(p);
@@ -734,35 +778,38 @@ function mark(k, st){ // st: live|done
       ic.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="13" height="13"><path d="M20 6 9 17l-5-5"/></svg>';
     }
   });
-  // browser assembles in sync
-  const build={site:["skHead"],apps:["skSide","skKpi"],ssl:[],user:["skChart"]};
-  (build[k]||[]).forEach(id=>{const el=$(id);el.classList.add("on");if(id==="skChart")el.classList.add("on");});
+  // المعاينة بتتجمع بالتزامن مع الخطوات الحقيقية — كل خطوة بترسم جزءًا
+  const build={site:["skHead"],apps:["skSide"],config:["skKpi"],user:[],alaa:["skChart"]};
+  (build[k]||[]).forEach(id=>$(id).classList.add("on"));
 }
 function startProvision(){
   $("cmdSd").textContent=sd.value+"."+ROOT_DOMAIN;
   $("caret").style.display="none";
   const chip=$("chip"); chip.classList.add("show");
+  startWaitTips();
   if(state.demo || !state.request_id || state.request_id==="DEMO"){
     // demo choreography
     const seq=[["queue","live",300],["queue","done",1400],["site","live",1500],["site","done",3600],
-               ["apps","live",3700],["apps","done",6400],["ssl","live",6500],["ssl","done",7900],
-               ["user","live",8000],["user","done",9400]];
+               ["apps","live",3700],["apps","done",6400],["config","live",6500],["config","done",7900],
+               ["user","live",8000],["user","done",9000],["alaa","live",9100],["alaa","done",10300]];
     seq.forEach(([k,st,t])=>setTimeout(()=>mark(k,st),t));
-    setTimeout(finish, 10000);
+    setTimeout(finish, 10800);
   } else {
-    // real polling
+    // التقدم من الخطوة الحقيقية اللي السيرفر بيقرأها من لوج التجهيز —
+    // مش تخمين من نص الحالة (كان بيقف على خطوة واحدة طول الدقائق).
+    // maxIdx بيمنع أي رجوع للخلف لو خطوة قصيرة لفّت بسرعة بين قياسين.
+    let maxIdx=0;
     const poll=setInterval(async ()=>{
       try{
         const s=await api(API.status,{request_id:state.request_id});
         if(!s) return;
         const st=(s.status||"").toLowerCase();
-        if(st.includes("queue"))            mark("queue","live");
-        else if(st.includes("provision"))   {mark("queue","done");mark("site","live");}
-        else if(st.includes("app"))         {mark("site","done");mark("apps","live");}
-        else if(st.includes("ssl"))         {mark("apps","done");mark("ssl","live");}
-        else if(st.includes("user"))        {mark("ssl","done");mark("user","live");}
-        else if(st.includes("active")||st.includes("ready")){ clearInterval(poll); ORDER.forEach(k=>mark(k,"done")); finish(); }
-        else if(st.includes("fail")){ clearInterval(poll); toast("حصل خطأ أثناء البناء — الاء هتتواصل معاك على بريدك", true); }
+        if(st.includes("active")||st.includes("ready")){ clearInterval(poll); clearInterval(wtTimer); ORDER.forEach(k=>mark(k,"done")); finish(); return; }
+        if(st.includes("fail")){ clearInterval(poll); clearInterval(wtTimer); toast("حصل خطأ أثناء البناء — الاء هتتواصل معاك على بريدك", true); return; }
+        const idx=ORDER.indexOf(s.step||"queue");
+        if(idx>maxIdx) maxIdx=idx;
+        mark(ORDER[maxIdx],"live");
+        $("chipT").textContent=s.detail ? "بنركّب: "+s.detail : "الاء بتجهّز موقعك… (عادةً ٢-٤ دقايق)";
       }catch(_){}
     }, 3500);
   }
@@ -772,6 +819,8 @@ function finish(){
   chip.classList.add("ok");
   chip.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg> الموقع جاهز';
   $("tl").style.display="none";
+  $("waitTips").style.display="none";
+  if(wtTimer) clearInterval(wtTimer);
   const url=`https://${sd.value}.${ROOT_DOMAIN}`;
   $("doneUrl").textContent=url.replace("https://","");
   $("doneBox").classList.add("show");

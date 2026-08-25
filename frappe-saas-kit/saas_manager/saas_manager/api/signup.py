@@ -183,6 +183,48 @@ def verify_otp(request_id: str, otp: str):
     }
 
 
+# أسماء ودّية للتطبيقات وهي بتتركب — بتظهر في شريحة الحالة تحت المعاينة
+_APP_LABELS = {
+    "erpnext": "وحدات ERP الأساسية (مبيعات · مشتريات · مخزون · حسابات)",
+    "hrms": "الموارد البشرية والرواتب",
+    "horizon_client": "بوابة اشتراكك وحدود باقتك",
+    "horizon_desk_theme": "هوية Horizon البصرية",
+    "alaa_widget": "مساعدتك الذكية ألاء",
+}
+
+
+def _current_step(log: str) -> tuple[str, str]:
+    """آخر أمر RUN في provisioning_log يحدد الخطوة الفعلية.
+
+    بلاغ المالك (٢٥ أغسطس): شريط التقدم كان بيقف على خطوة واحدة طول
+    الدقائق لأن الحالة "Provisioning" ثابتة — التصنيف هنا مبني على تسلسل
+    أوامر حقيقي من لوج تجهيز heliumai (لا على تخمين ترتيب الكود).
+    الخطوات: queue ⟵ site ⟵ apps ⟵ config ⟵ user ⟵ alaa.
+    """
+    last = ""
+    for line in reversed((log or "").splitlines()):
+        if "RUN: " in line:
+            last = line
+            break
+    if not last:
+        return "queue", ""
+    if "saas_subscription_ends_on" in last or "alaa" in last or " backup" in last             or last.rstrip().endswith("clear-cache") or "list-apps" in last:
+        # كل ذيل التجهيز (سر SSO، تركيب الودجت، المفاتيح، الباكب الأول)
+        return "alaa", ""
+    if "install-app" in last:
+        app = last.rsplit("install-app", 1)[-1].strip().split()[0] if "install-app " in last else ""
+        return "apps", _APP_LABELS.get(app, app)
+    if "setup_wizard" in last:
+        return "user", "بنجهّز شركتك: عربي · ريال سعودي · دليل حسابات مرقّم"
+    if "add-system-manager" in last:
+        return "user", "بننشئ حسابك كمدير للنظام"
+    if "set-config" in last or "Website Se" in last or "clear-website-cache" in last:
+        return "config", ""
+    if "new-site" in last:
+        return "site", ""
+    return "site", ""
+
+
 @frappe.whitelist(allow_guest=True)
 def provisioning_status(request_id: str):
     """Polled by the signup page to show live progress."""
@@ -191,8 +233,11 @@ def provisioning_status(request_id: str):
     if not req or not req.tenant_site:
         return {"status": "pending"}
     t = frappe.db.get_value("Tenant Site", req.tenant_site,
-                            ["status", "site_name"], as_dict=True)
-    return {"status": (t.status or "").lower(), "url": f"https://{t.site_name}"}
+                            ["status", "site_name", "provisioning_log"], as_dict=True)
+    out = {"status": (t.status or "").lower(), "url": f"https://{t.site_name}"}
+    if out["status"] == "provisioning":
+        out["step"], out["detail"] = _current_step(t.provisioning_log)
+    return out
 
 
 @frappe.whitelist(allow_guest=True)
