@@ -339,6 +339,14 @@ def provision_site(tenant: str):
             run_bench(["--site", site, "install-app", app],
                       tenant_name=tenant, timeout=2400)
 
+        # 2.5) امتثال زاتكا للسعوديين — قرار المالك بعد دراسة التسعير
+        # (٢٥ أغسطس): «hrms للكل + زاتكا للسعوديين». hrms جاي من
+        # apps_to_install في الباقة، وksa_compliance بالبلد لأنه سعودي
+        # بحت (فوترة هيئة الزكاة) — المصري له ETA لما تُبنى.
+        if (doc.get("country") or "Saudi Arabia") == "Saudi Arabia":
+            run_bench(["--site", site, "install-app", "ksa_compliance"],
+                      tenant_name=tenant, timeout=2400)
+
         # 3) plan metadata + limits + feature gates inside the tenant site config
         apply_plan_config(site, plan, tenant_name=tenant)
 
