@@ -258,6 +258,9 @@ h1 .u::after{content:"";position:absolute;right:0;bottom:4px;height:10px;width:1
 .resend{font-size:12.5px;color:#5F6875;font-weight:700}
 .resend button{border:none;background:none;font-family:inherit;color:var(--navy);font-weight:800;cursor:pointer;font-size:12.5px}
 .resend button[disabled]{color:var(--faint);cursor:default}
+.spam-hint{display:none;margin-top:12px;background:#FFF8E6;border:1px solid #EAD9A0;color:#7A5E0E;
+  border-radius:12px;padding:11px 14px;font-size:12.5px;font-weight:700;line-height:1.8}
+.spam-hint.show{display:block}
 .back{display:block;margin:16px auto 0;border:none;background:none;font-family:inherit;font-size:12.5px;font-weight:700;color:#5F6875;cursor:pointer}
 .back:hover{color:var(--navy)}
 
@@ -454,6 +457,9 @@ input:focus-visible,button:focus-visible,.plan:focus-within{outline:2px solid va
               <input inputmode="numeric" maxlength="1" aria-label="الرقم 6">
             </div>
             <div class="resend">ماوصلكش؟ <button id="resend" disabled>إعادة الإرسال <span id="cnt">(60)</span></button></div>
+            <!-- حادثة حية (٢٥ أغسطس): عميل ياهو الكود وصله delivered وقعد في
+                 السبام — التنبيه يظهر بعد ٢٠ ثانية بدل ما يقلق اللي كوده بيوصل عادي -->
+            <div class="spam-hint" id="spamHint">📥 مش لاقي الكود؟ بص في <b>الرسائل غير المرغوبة (Spam/Junk)</b> — أول رسالة من نظام جديد بتروح هناك أحيانًا</div>
             <button class="cta" id="cta2" style="margin-top:20px"><span class="sp"></span><span class="lbl">تأكيد وبدء البناء</span></button>
             <button class="back" id="back1">→ رجوع لتعديل البيانات</button>
           </div>
@@ -680,6 +686,7 @@ $("p1").addEventListener("submit", async e=>{
     state.request_id = r? (r.request_id||r.name) : "DEMO";
     $("emEcho").textContent = payload.email;
     goStep(2);
+    setTimeout(()=>$("spamHint").classList.add("show"), 20000);
     if(state.demo) toast("وضع تجريبي — الكود: 123456");
   }catch(err){ if(!routeServerErr(err)) toast(String(err), true); }
   btn.classList.remove("busy"); btn.disabled=false;
