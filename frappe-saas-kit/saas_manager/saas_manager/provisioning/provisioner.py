@@ -347,7 +347,9 @@ def provision_site(tenant: str):
         # 2) install plan apps + horizon_client (limits/features enforcement — always)
         #    + horizon_desk_theme: هوية Horizon لازم تظهر من أول شاشة دخول
         #    (بلاغ حقيقي: أول مستأجر اتبنى بشاشة فرابي الخام)
-        for app in plan.apps_list() + ["horizon_client", "horizon_desk_theme"]:
+        # horizon_command حل محل horizon_desk_theme للمستأجرين الجدد (قرار
+        # المالك ٢٦ أغسطس بعد قياس الثيم كاملًا) — القائمون على القديم لا يُلمسون
+        for app in plan.apps_list() + ["horizon_client", "horizon_command"]:
             run_bench(["--site", site, "install-app", app],
                       tenant_name=tenant, timeout=2400)
 
