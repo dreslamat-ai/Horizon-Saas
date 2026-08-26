@@ -152,6 +152,31 @@ def apply_plan_config(site: str, plan, tenant_name: str | None = None):
 # main provisioning job (runs on the LONG queue)
 # --------------------------------------------------------------------------- #
 
+def setup_outgoing_email(site: str, tenant_name: str | None = None):
+    """حساب البريد الصادر عبر جسر Horizon المحلي (127.0.0.1:2525) — نفس
+    إعداد control حرفيًا. من غيره أي بريد يخرج من موقع المستأجر (إيصالات
+    تبرع non_profit، إشعارات، دعوات مستخدمين) يتكدس في الطابور صامتًا —
+    مقيس فعليًا ٢٦ أغسطس: demo وmtc كانا بلا أي مخرج بريد أصلًا.
+
+    frappe.client.insert عمدًا لا دالة saas_manager: التطبيق غير مثبت على
+    مواقع المستأجرين وbench execute لموديوله يفشل هناك (درس مقيس)."""
+    account = {
+        "doctype": "Email Account",
+        "email_account_name": "Horizon Bridge",
+        "email_id": "no-reply@horizonerp.cloud",
+        "enable_outgoing": 1, "default_outgoing": 1,
+        "smtp_server": "127.0.0.1", "smtp_port": "2525",
+        "use_tls": 0, "use_ssl_for_outgoing": 0,
+        "no_smtp_authentication": 1,
+        "send_unsubscribe_message": 1, "track_email_status": 1,
+    }
+    run_bench(
+        ["--site", site, "execute", "frappe.client.insert",
+         "--kwargs", json.dumps({"doc": account})],
+        tenant_name,
+    )
+
+
 def apply_branding(site: str, tenant_name: str | None = None):
     """هوية Horizon من أول شاشة: اللوجو والأيقونة ملفات لكل موقع على حدة
     (لا تأتي مع الثيم) — بلاغ حقيقي: أول مستأجر ظهر بلوجو ERPNext الخام."""
@@ -366,6 +391,14 @@ def provision_site(tenant: str):
 
         # 3.5) هوية Horizon (لوجو/أيقونة/اسم) — قبل أول دخول للمستخدم
         apply_branding(site, tenant_name=tenant)
+
+        # 3.6) البريد الصادر عبر الجسر — غير قاتلة عمدًا: موقع بلا بريد
+        # صادر أفضل من تجهيز واقع كله؛ الفشل يتسجل ويتصلح يدويًا
+        try:
+            setup_outgoing_email(site, tenant_name=tenant)
+        except Exception:
+            _log(tenant, "البريد الصادر: إنشاء حساب الجسر فشل — يتظبط يدويًا. التفاصيل في Error Log.")
+            frappe.log_error(frappe.get_traceback(), f"Outgoing email setup failed: {site}")
 
         # 4) مستخدم المالك كمدير نظام — **قبل** الإعداد التلقائي، وإلا
         #    الإعداد ينشئه الأول وadd-system-manager يقع بـDuplicateEntryError
