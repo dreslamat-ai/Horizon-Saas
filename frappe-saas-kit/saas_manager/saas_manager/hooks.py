@@ -17,6 +17,11 @@ scheduler_events = {
         "30 2 * * *": [
             "saas_manager.provisioning.lifecycle.backup_all_active_sites"
         ],
+        # عملاء طلبوا كود دخول وما رجعوش يفعّلوه بيتوهوا بصمت — تنبيه
+        # المالك كل ١٥ دقيقة (نفس صلاحية الكود) عشان ينقذ العميل يدويًا
+        "*/15 * * * *": [
+            "saas_manager.api.signup.check_stuck_signups"
+        ],
     },
 }
 

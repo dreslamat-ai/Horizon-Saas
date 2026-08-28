@@ -289,3 +289,41 @@ def provisioning_status(request_id: str):
 def signup_status(request_id: str):
     """Alias of provisioning_status — the signup page polls this name."""
     return provisioning_status(request_id)
+
+
+def check_stuck_signups():
+    """مراقب دوري (كل ١٥ دقيقة عبر hooks.scheduler_events) — بلاغ المالك
+    (٢٨ أغسطس): عميل حقيقي (kemooo.speed@gmail.com، SR-2026-00029) طلب
+    التسجيل واتأكد إن Resend سلّم كود الدخول فعليًا، لكنه رجع "Pending OTP"
+    منسي بلا أي محاولة تحقق (attempts=0) — ومحدش في Horizon عرف بيه غير
+    بالصدفة. مفيش مؤشر كان بيوصل غير لحظة النجاح الكامل (Provisioned).
+
+    الحل هنا تحويل حالة كل طلب انتهت صلاحية كوده بلا تحقق من "Pending OTP"
+    لـ"Expired" (نفس الانتقال اللي verify_otp كان بيعمله لو العميل رجع
+    بنفسه) — والانتقال نفسه هو علامة "لسه ما تبلّغناش بيه" فما فيش داعي
+    لحقل جديد في الدوكتايب: طلب اتحول لـ"Expired" في هذا التشغيل يبعت
+    تنبيه مرة واحدة بس، والتشغيلات الجاية مش هتلاقيه في فلتر Pending OTP
+    تاني. otp_expires_at IS NOT NULL محطوطة عمدًا حماية من نفس عطل NULL
+    اللي عطّل مواقع الإنتاج في enforce_expiries (٢٤/٢٥ أغسطس)."""
+    stuck = frappe.get_all(
+        "Signup Request",
+        filters=[
+            ["status", "=", "Pending OTP"],
+            ["otp_expires_at", "is", "set"],
+            ["otp_expires_at", "<", now_datetime()],
+        ],
+        fields=["name", "business_name", "email", "phone", "subdomain", "creation"],
+    )
+    for r in stuck:
+        frappe.db.set_value("Signup Request", r.name, "status", "Expired")
+        notify_owner_telegram(
+            "🔕 عميل محتمل اتاه كود الدخول وما رجعش يفعّله\n"
+            f"النشاط: {r.business_name}\n"
+            f"البريد: {r.email}\n"
+            f"الجوال: {r.phone or '—'}\n"
+            f"الدومين المطلوب: {r.subdomain}\n"
+            f"وقت الطلب: {r.creation}\n"
+            "الكود انتهت صلاحيته (١٥ دقيقة) — لو حابب تنقذه كلّمه أو ابعتله "
+            "رابط تسجيل جديد يدويًا."
+        )
+    frappe.db.commit()
