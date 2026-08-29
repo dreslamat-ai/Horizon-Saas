@@ -17,4 +17,11 @@ doc_events = {
 }
 
 # subscription banner (days-left warning) on every Desk page
-app_include_js = "/assets/horizon_client/js/horizon_banner.js"
+#
+# 🔴 نسخة يدوية في الاستعلام (?v=) بعد بلاغ حقيقي (٣٠ أغسطس): الملف
+# بلا Cache-Control من nginx (فحص فعلي: ETag/Last-Modified بس)، فمتصفح
+# المالك فضل شهرين على نسخة قديمة بعد إصلاحين متتاليين حتى بعد نافذة
+# تخفي — الرابط الثابت بلا رقم نسخة يخلي التخمين الافتراضي للمتصفح
+# (heuristic caching) يمسك مدة طويلة من أول تحميل قديم. لازم ترفع
+# الرقم ده يدويًا مع أي تعديل جديد على horizon_banner.js.
+app_include_js = "/assets/horizon_client/js/horizon_banner.js?v=20260830b"
