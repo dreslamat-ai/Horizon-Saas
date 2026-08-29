@@ -72,6 +72,16 @@
       // ٢٩ أغسطس: شجرة الحسابات). القياس الحي أثبتها: rectTop الفعلي
       // لـ.page-head كان ١٢٨.٧٥ بينما بار التجربة بينتهي عند ٨٤.٧٥ —
       // فرق ٤٤ بكسل زيادة، بالظبط ارتفاع شريط التابات المعدود مرّتين.
+      // بلاغ لقطة حقيقي (٣٠ أغسطس، صفحة "إنشاء" Workspace): أول كارت في
+      // محتوى الـWorkspace كان مقصوص خلف بار التجربة (بدأ عند 68px بينما
+      // البار نفسه لسه ممتد لحد 84.75px). السبب: `.page-head` مخفي تمامًا
+      // على صفحات Workspace (`body.h-ws-page .page-head{display:none}`،
+      // إصلاح سابق في horizon_tab_theme.css) فقاعدة الـtop بتاعته فوق دي
+      // مالهاش أي أثر هنا — مفيش أي قاعدة كانت بتدفع محتوى الـWorkspace
+      // نفسه لتحت عشان يتفادى البار. `html.h-tabs-ready body.h-ws-page`
+      // تخصيصيتها (0,2,2) تتغلّب على قاعدة الحشو الأصلية `html.h-tabs-ready
+      // body` (0,1,2) في horizon_tab_theme.css — بنفس درس فخّ التخصيصية
+      // المسجَّل قبل كده في هذا الملف.
       var st = document.createElement("style");
       document.head.appendChild(st);
       function updateOffsets() {
@@ -80,7 +90,8 @@
         var launcherOffset = topBarHeight() + bannerHeight;
         st.textContent =
           ".h-desktop-launcher{padding-top:calc(" + launcherOffset + "px + 16px)!important}" +
-          "body:not(.h-has-launcher) .page-head{top:" + bannerHeight + "px!important}";
+          "body:not(.h-has-launcher) .page-head{top:" + bannerHeight + "px!important}" +
+          "html.h-tabs-ready body.h-ws-page{padding-top:calc(" + topBarHeight() + "px + " + bannerHeight + "px)!important}";
       }
       updateOffsets();
 
