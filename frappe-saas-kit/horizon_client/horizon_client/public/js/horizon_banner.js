@@ -103,7 +103,7 @@
         // RTL فالقيمة فيزيائية مباشرة.
         bar.style.right = document.querySelector(".h-rail") ? "68px" : "0";
         var launcher = document.querySelector(".h-desktop-launcher");
-        if (!launcher) { bar.style.display = "block"; document.body.classList.remove("h-has-launcher"); return; }
+        if (!launcher) { bar.style.display = "flex"; document.body.classList.remove("h-has-launcher"); return; }
         document.body.classList.add("h-has-launcher");
         // offsetParent بيرجع null دايمًا مع position:fixed — القياس الصحيح
         // هو computed display + أبعاد فعلية (بلاغ حقيقي: الشريط كان بيختفي
@@ -111,7 +111,11 @@
         var cs = getComputedStyle(launcher);
         var rect = launcher.getBoundingClientRect();
         var visible = cs.display !== "none" && cs.visibility !== "hidden" && rect.width > 0;
-        bar.style.display = visible ? "block" : "none";
+        // بلاغ لقطة حقيقي (٣٠ أغسطس): "block" هنا كانت بتلغي display:flex
+        // اللي اتحط وقت إنشاء الشريط (cssText الأصلي)، فالنص والزرار كانوا
+        // بيتكوّموا شمال الشريط بدل ما يتوزعوا على طرفيه (justify-content:
+        // space-between ملهوش أي أثر غير مع flex/grid).
+        bar.style.display = visible ? "flex" : "none";
       }
       sync();
       updateOffsets();

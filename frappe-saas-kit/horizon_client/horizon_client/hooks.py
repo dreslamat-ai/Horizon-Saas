@@ -24,4 +24,4 @@ doc_events = {
 # تخفي — الرابط الثابت بلا رقم نسخة يخلي التخمين الافتراضي للمتصفح
 # (heuristic caching) يمسك مدة طويلة من أول تحميل قديم. لازم ترفع
 # الرقم ده يدويًا مع أي تعديل جديد على horizon_banner.js.
-app_include_js = "/assets/horizon_client/js/horizon_banner.js?v=20260830b"
+app_include_js = "/assets/horizon_client/js/horizon_banner.js?v=20260830c"
