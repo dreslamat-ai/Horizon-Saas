@@ -63,35 +63,40 @@
       bar.addEventListener("click", function () { window.location.href = "/subscription"; });
       document.body.appendChild(bar);
 
-      // شبكة كروت الرئيسية (الثيم) fixed من أعلى الشاشة — نزود حشوتها
-      // العلوية بارتفاع الشريطين مجموعين. أما .page-head فـsticky داخل
-      // تدفّق body، وbody نفسه أصلاً معاه padding-top بارتفاع شريط
-      // التابات (horizon_tab_theme بيحقنه) — فلو ضفنا topBarHeight()
-      // تاني هنا بنعدّه مرّتين، وده اللي كان بيعمل فجوة بيضا فاضية
-      // تحت شريط التابات في كل صفحة مش Workspace (بلاغ لقطة حقيقي،
-      // ٢٩ أغسطس: شجرة الحسابات). القياس الحي أثبتها: rectTop الفعلي
-      // لـ.page-head كان ١٢٨.٧٥ بينما بار التجربة بينتهي عند ٨٤.٧٥ —
-      // فرق ٤٤ بكسل زيادة، بالظبط ارتفاع شريط التابات المعدود مرّتين.
-      // بلاغ لقطة حقيقي (٣٠ أغسطس، صفحة "إنشاء" Workspace): أول كارت في
-      // محتوى الـWorkspace كان مقصوص خلف بار التجربة (بدأ عند 68px بينما
-      // البار نفسه لسه ممتد لحد 84.75px). السبب: `.page-head` مخفي تمامًا
-      // على صفحات Workspace (`body.h-ws-page .page-head{display:none}`،
-      // إصلاح سابق في horizon_tab_theme.css) فقاعدة الـtop بتاعته فوق دي
-      // مالهاش أي أثر هنا — مفيش أي قاعدة كانت بتدفع محتوى الـWorkspace
-      // نفسه لتحت عشان يتفادى البار. `html.h-tabs-ready body.h-ws-page`
-      // تخصيصيتها (0,2,2) تتغلّب على قاعدة الحشو الأصلية `html.h-tabs-ready
-      // body` (0,1,2) في horizon_tab_theme.css — بنفس درس فخّ التخصيصية
-      // المسجَّل قبل كده في هذا الملف.
+      // ── تاريخ الإصلاحات الثلاثة على نفس المشكلة — ليه اتوحّدت هنا ──────
+      // ١) شجرة الحسابات (٢٩ أغسطس): topBarHeight()+bannerHeight على
+      //    .page-head كان بيعدّ شريط التابات مرّتين (body أصلاً معاه
+      //    padding-top بارتفاعه) → فجوة بيضا. الإصلاح وقتها: bannerHeight
+      //    وحده على .page-head{top}.
+      // ٢) صفحة "إنشاء" Workspace (٣٠ أغسطس): .page-head مخفي بالكامل
+      //    هناك (`body.h-ws-page .page-head{display:none}`)، فإصلاح (١)
+      //    مالوش أي أثر — مفيش حاجة كانت بتدفع محتوى الـWorkspace نفسه
+      //    لتحت. الإصلاح وقتها: body.h-ws-page تاخد padding-top إضافي.
+      // ٣) قائمة DocType (٣٠ أغسطس، بلاغ لقطة حقيقي): إصلاح (١) عمل عطل
+      //    تاني مختلف — `.page-head` sticky بيحجز ارتفاعه الطبيعي (بلا
+      //    أي إزاحة) في تدفّق الصفحة، لكن بيترسم بصريًا مُزاحًا لتحت
+      //    بـbannerHeight (٨٤.٧٥ بدل ٤٤ الطبيعي). العنصر اللي بعده في
+      //    التدفّق (.container.page-body وجوّاه .filter-selector) بيتحسب
+      //    مكانه من الارتفاع الطبيعي المحجوز (بيبدأ عند ١١٣ = ٤٤+٦٩)، مش
+      //    من الموضع البصري الفعلي (اللي بينتهي عند ١٥٣.٧٥) — فرق ٤٠.٧٥
+      //    بكسل تراكب حقيقي بين آخر .page-head البصري وأول عنصر بعده.
+      //
+      // الحل الموحّد: بدل ما نعوّض إزاحة البانر مرّتين في مكانين مختلفين
+      // (top على .page-head + padding على body.h-ws-page)، بنخلّي body
+      // نفسه (كل الصفحات، مش بس Workspace) ياخد الإزاحة الكاملة
+      // (شريط التابات + البانر) دايمًا، ونسيب .page-head{top:0} —
+      // بكده موضعه الطبيعي في التدفّق يبقى مطابق تمامًا لموضعه البصري،
+      // وأي عنصر بعده في التدفّق يتحسب صح تلقائيًا بلا أي فجوة ولا تراكب.
       var st = document.createElement("style");
       document.head.appendChild(st);
       function updateOffsets() {
         bar.style.top = topBarHeight() + "px";
         var bannerHeight = bar.getBoundingClientRect().height;
-        var launcherOffset = topBarHeight() + bannerHeight;
+        var totalOffset = topBarHeight() + bannerHeight;
         st.textContent =
-          ".h-desktop-launcher{padding-top:calc(" + launcherOffset + "px + 16px)!important}" +
-          "body:not(.h-has-launcher) .page-head{top:" + bannerHeight + "px!important}" +
-          "html.h-tabs-ready body.h-ws-page{padding-top:calc(" + topBarHeight() + "px + " + bannerHeight + "px)!important}";
+          ".h-desktop-launcher{padding-top:calc(" + totalOffset + "px + 16px)!important}" +
+          "body:not(.h-has-launcher) .page-head{top:0!important}" +
+          "html.h-tabs-ready body[class]{padding-top:" + totalOffset + "px!important}";
       }
       updateOffsets();
 
